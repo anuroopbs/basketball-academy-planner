@@ -387,6 +387,7 @@ const PARAMS = [
   { group: "Website, hosting & quality", items: [
     ["A real website with cards that show the key numbers", "Whole site"],
     ["Hosted on GitHub, nothing kept locally, editable from anywhere", "GitHub repo + GitHub Pages"],
+    ["A real backend (Supabase): save plans to the cloud and share them", "☁️ Cloud button in the header"],
     ["Tabs to move between sections", "Top navigation (grouped)"],
     ["A pitch deck that shows the whole plan clearly", "Deck"],
     ["A list of every parameter asked for, duplicates removed", "Parameters (this tab)"],
