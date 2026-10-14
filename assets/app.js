@@ -779,6 +779,7 @@ let W = { ...Object.fromEntries(FACTORS.map(f => [f.k, f.w])), ...(saved.W || {}
 let selCity = null;
 const CITIES = CITY_DATA.map(([name, cc, tier, ...rest]) => { const why = rest.pop(); return { name, cc, tier, why, s: Object.fromEntries(FACTORS.map((f, i) => [f.k, rest[i]])) }; });
 const countryName = cc => (COUNTRIES.find(c => c.code === cc) || {}).name || ({ LT: "Lithuania" })[cc] || cc;
+const cityWithCountry = c => `${c.name}, ${countryName(c.cc)}`;
 function rankCities() {
   const tw = FACTORS.reduce((s, f) => s + W[f.k], 0) || 1;
   return CITIES.map(c => ({ ...c, score: FACTORS.reduce((s, f) => s + c.s[f.k] * W[f.k], 0) / tw * 10 })).sort((a, b) => ((a.tier === 1) - (b.tier === 1)) || b.score - a.score);
@@ -799,7 +800,7 @@ function rankRows(list, key, valKey, sel, label) {
     const sep = c.tier === 1 && (i === 0 || list[i - 1].tier !== 1) ? `<div class="tier-sep">${TIER_SEP}</div>` : "";
     const hot = i < 5 && c.tier !== 1;
     return sep + `<div class="hbar-row${c[key] === sel ? " sel" : ""}${c.tier === 1 ? " dim" : ""}" data-${attr}="${c[key]}">
-    <span class="rk">${i + 1}</span><span><b>${c[label]}</b> ${tierTag(c.tier)}</span>
+    <span class="rk">${i + 1}</span><span><b>${c[label]}</b>${c.cc ? ` <span class="muted small">${countryName(c.cc)}</span>` : ""} ${tierTag(c.tier)}</span>
     <div class="hbar"><span style="width:${c[valKey] / max * 100}%;background:${hot ? "linear-gradient(90deg,#ff7a1a,#ffb547)" : "#3a404c"}"></span></div>
     <span class="v">${c[valKey].toFixed(1)}</span></div>`;
   }).join("");
@@ -812,12 +813,12 @@ function renderCities() {
   $("cityRank").innerHTML = rankRows(ranked, "name", "score", selCity, "name");
   const c = ranked.find(x => x.name === selCity), rank = ranked.indexOf(c) + 1;
   $("cityDetail").innerHTML = `<div class="eyebrow">#${rank} of ${ranked.length} · ${countryName(c.cc)} · ${c.tier === 1 ? "Tier 1 (expensive)" : "Tier " + c.tier}</div>
-    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><h2>${c.name}</h2><span style="font-size:28px;font-weight:900;color:var(--accent-2)">${c.score.toFixed(1)}</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><h2>${c.name} <span class="muted" style="font-size:15px;font-weight:600">${countryName(c.cc)}</span></h2><span style="font-size:28px;font-weight:900;color:var(--accent-2)">${c.score.toFixed(1)}</span></div>
     <p class="muted" style="margin:6px 0 12px;font-size:13px">${c.why}</p>
     <div class="mini-bars">${FACTORS.map(f => `<div class="hbar-row"><span>${f.label} <span class="muted small">${Math.round(W[f.k] / tw * 100)}%</span></span>
       <div class="hbar"><span style="width:${c.s[f.k] * 10}%;background:${heatBg(c.s[f.k])}"></span></div><span class="v">${c.s[f.k]}</span></div>`).join("")}</div>`;
   $("cityHeat").innerHTML = `<thead><tr><th>#</th><th class="l">City</th><th>Score</th>${FACTORS.map(f => `<th title="${f.why}">${f.label.replace(" (few academies)", "").replace("Residential / family areas", "Residential")}</th>`).join("")}</tr></thead><tbody>` +
-    ranked.map((x, i) => `${x.tier === 1 && (i === 0 || ranked[i - 1].tier !== 1) ? `<tr><td colspan="${FACTORS.length + 3}" class="tier-row">${TIER_SEP}</td></tr>` : ""}<tr class="clickable${x.name === selCity ? " sel" : ""}${x.tier === 1 ? " dim" : ""}" data-city="${x.name}"><td>${i + 1}</td><td class="l"><b>${x.name}</b> <span class="muted small">${x.cc}</span> ${tierTag(x.tier)}</td>
+    ranked.map((x, i) => `${x.tier === 1 && (i === 0 || ranked[i - 1].tier !== 1) ? `<tr><td colspan="${FACTORS.length + 3}" class="tier-row">${TIER_SEP}</td></tr>` : ""}<tr class="clickable${x.name === selCity ? " sel" : ""}${x.tier === 1 ? " dim" : ""}" data-city="${x.name}"><td>${i + 1}</td><td class="l"><b>${x.name}</b> <span class="muted small">${countryName(x.cc)}</span> ${tierTag(x.tier)}</td>
       <td><b style="color:var(--accent-2)">${x.score.toFixed(1)}</b></td>${FACTORS.map(f => `<td class="heat" style="background:${heatBg(x.s[f.k])}">${cellIn(`city.${x.name}.${f.k}`, x.s[f.k], `${x.name}: ${f.label}`, "heat-in")}</td>`).join("")}</tr>`).join("") + "</tbody>";
 }
 
@@ -864,7 +865,7 @@ function matrixSvg(list) {
   list.forEach(c => {
     const cx = X(c.ease), cy = Y(c.demand), on = c.code === selCountry;
     g += `<g data-country="${c.code}" style="cursor:pointer"><circle cx="${cx}" cy="${cy}" r="${on ? 10 : 7}" fill="${on ? "#ffb547" : "#ff7a1a"}" stroke="#0a0c11" stroke-width="2.5"/>
-      <text x="${cx + 12}" y="${cy + 4.5}" fill="${on ? "#ffb547" : "#eef0f4"}" font-size="13.5" font-weight="700">${c.bestCity.split(" / ")[0]}</text></g>`;
+      <text x="${cx + 12}" y="${cy + 4.5}" fill="${on ? "#ffb547" : "#eef0f4"}" font-size="13" font-weight="700">${c.bestCity.split(" / ")[0]} <tspan fill="#8b93a3" font-weight="500">(${c.name})</tspan></text></g>`;
   });
   return `<svg viewBox="0 0 ${Wd} ${H}" role="img" aria-label="Ease vs demand">${g}</svg>`;
 }
@@ -877,7 +878,7 @@ function renderBusiness() {
   $("bizRank").innerHTML = rankRows(list, "code", "ease", selCountry, "name");
   const c = list.find(x => x.code === selCountry), rank = list.indexOf(c) + 1;
   $("bizDetail").innerHTML = `<div class="cols-3" style="gap:20px">
-    <div><div class="eyebrow">#${rank} easiest · best city ${c.bestCity}</div>
+    <div><div class="eyebrow">#${rank} easiest · best city: ${c.bestCity}, ${c.name}</div>
       <div style="display:flex;justify-content:space-between;align-items:baseline"><h2>${c.name}</h2><span style="font-size:28px;font-weight:900;color:var(--accent-2)">${c.ease.toFixed(1)}</span></div>
       <dl class="facts"><dt>Company</dt><dd>${c.entity}</dd><dt>Register</dt><dd>${c.time}</dd><dt>Setup cost</dt><dd>${c.setup}</dd>
         <dt>Min. capital</dt><dd>${c.capital}</dd><dt>Corporate tax</dt><dd>${c.tax}</dd><dt>Labour</dt><dd>€${c.labour.toFixed(1)}/h <span class="muted">(EU €34.9)</span></dd></dl></div>
@@ -999,7 +1000,7 @@ function renderMission(m) {
     { label: "Court used", value: pct(m.tt.util), sub: `${Object.keys(m.tt.by).length} uses, 06–22h`, go: "timetable" },
     { label: "Kids per coach", value: A.group, sub: "vs 4–8 in racket sports", go: "why" },
     { label: "Network investment", value: short(x.investment), sub: `${PN.venues} partner venues`, go: "partners" },
-    { label: "Top demand city", value: city.name, sub: `${city.score.toFixed(0)} / 100`, go: "cities" },
+    { label: "Top demand city", value: city.name, sub: `${countryName(city.cc)} · ${city.score.toFixed(0)} / 100`, go: "cities" },
     { label: "Easiest to start", value: easy.name, sub: `${easy.ease.toFixed(0)} / 100`, go: "business" },
   ]);
 }
@@ -1050,8 +1051,8 @@ function buildSlides(m) {
      ${K([{ hero: true, label: "Network profit / mo", value: sign(x.profit) }, { label: "Investment", value: short(x.investment) },
        { label: "Per kid", value: eur(x.kidsReached ? x.investment / x.kidsReached : 0) }, { label: "Payback", value: x.payback ? `${Math.ceil(x.payback)} mo` : "Never" }])}`,
     `<div class="eyebrow">Where</div><h2>Launch where it's easy and demand is strong</h2>
-     ${K(launch.map((c, i) => ({ hero: i === 0, label: c.name, value: c.bestCity.split(" / ")[0], sub: `Ease ${c.ease.toFixed(0)} · demand ${c.demand.toFixed(0)}` })))}
-     <p style="margin-top:14px">Top demand: ${cities.map(c => c.name).join(", ")}. Easiest to start: ${countries.slice(0, 3).map(c => c.name).join(", ")}.</p>`,
+     ${K(launch.map((c, i) => ({ hero: i === 0, label: c.name, value: c.bestCity.split(" / ")[0], sub: `${c.name} · ease ${c.ease.toFixed(0)} · demand ${c.demand.toFixed(0)}` })))}
+     <p style="margin-top:14px">Top demand: ${cities.map(cityWithCountry).join("; ")}. Easiest to start: ${countries.slice(0, 3).map(c => c.name).join(", ")}.</p>`,
     `<div class="eyebrow">Funding</div><h2>Grants reduce the founder capital needed</h2>
      ${K([{ hero: true, label: "Year 1 grants", value: "€30–90k" }, { label: "Erasmus+ small-scale", value: "€30k / €60k" }, { label: "Erasmus+ cooperation", value: "up to €400k" }, { label: "Ireland sports capital", value: "up to €200k" }])}`,
     `<div class="eyebrow">Roadmap</div><h2>From one warehouse to Europe</h2>
