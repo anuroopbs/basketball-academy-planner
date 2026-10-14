@@ -69,7 +69,7 @@ const GYM_KIT = [
   ["Kettlebells, wall balls, plyo boxes", "€2k–4k"],
   ["Rowers, air bikes, ski ergs", "€8k–15k"],
   ["Sled, battle ropes, bands, mats", "€1.5k–3k"],
-  ["Rubber gym flooring (per m²)", "€35–60"],
+  ["Rubber gym flooring", "€35–60/m²"],
   ["Sound system, mirrors, timer clock", "€2k–4k"],
 ];
 
@@ -460,19 +460,7 @@ const ROADMAP = [
 // de-duplicated. [requirement, where it lives on the site]
 // ---------------------------------------------------------------------
 const PARAMS = [
-  { group: "Website, hosting & quality", items: [
-    ["A real website with cards that show the key numbers", "Whole site"],
-    ["Hosted on GitHub, nothing kept locally, editable from anywhere", "GitHub repo + GitHub Pages"],
-    ["A real backend (Supabase): save plans to the cloud and share them", "☁️ Cloud button in the header"],
-    ["Tabs to move between sections", "Top navigation (grouped)"],
-    ["A pitch deck that shows the whole plan clearly", "Deck"],
-    ["A list of every parameter asked for, duplicates removed", "Parameters (this tab)"],
-    ["Very detailed, beautiful and easy to understand; reviewed as an expert", "Whole site; expert recommendations in Mission"],
-    ["A source for every figure, shown when you click", "“ⓘ Sources” buttons throughout"],
-    ["Heavy data hidden by default, expandable in one click", "Collapsible sections throughout"],
-  ]},
   { group: "Mission & strategy", items: [
-    ["A clear, systematic mission", "Mission"],
     ["Start with a small warehouse hub first", "Mission roadmap · Calculator"],
     ["Use the hub to train coaches and run a coaching programme", "Mission: Phase 2"],
     ["Rent out trained coaches and staff", "Revenue streams · Partner venues"],
@@ -503,6 +491,7 @@ const PARAMS = [
     ["Hire talented coaches and support staff", "Partner venues · Mission"],
     ["Start lean: a small warehouse with a court, office, small changing room, lockers and a big store room for all equipment", "Hub calculator: Lean start build, floor plan, store room"],
     ["Investor-grade view of the money needed, month by month", "Hub calculator: 24-month cash flow"],
+    ["All areas in square feet by default, with a ft² / m² switch at the top", "Header switch, used on every tab"],
     ["Every number editable, saved, and linked numbers update", "✏️ edit fields in the calculator, timetable, kit lists, store room, sports, cities, countries, partners"],
   ]},
   { group: "Multi-use court & timetable", items: [

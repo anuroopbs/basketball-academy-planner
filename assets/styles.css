@@ -407,3 +407,8 @@ td.heat { padding: 3px 4px; }
 .tier-sep { color: #fca5a5; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; margin: 12px 0 4px; padding-top: 8px; border-top: 1px dashed rgba(239,68,68,.35); }
 td.tier-row { color: #fca5a5; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; background: rgba(239,68,68,.06); text-align: left; }
 .hbar-row.dim, tr.dim td { opacity: .55; }
+
+/* ---------- Unit switch ---------- */
+.unit-seg { display: flex; gap: 2px; background: var(--s2); border: 1px solid var(--line-2); border-radius: 10px; padding: 3px; flex: 0 0 auto; }
+.unit-seg button { background: none; border: none; color: var(--muted); font: inherit; font-size: 12.5px; font-weight: 800; padding: 5px 9px; border-radius: 7px; cursor: pointer; min-height: 30px; }
+.unit-seg button.on { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #111; }

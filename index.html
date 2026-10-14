@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=11">
+<link rel="stylesheet" href="assets/styles.css?v=12">
 </head>
 <body>
 
@@ -33,6 +33,7 @@
       <button class="tab" role="tab" data-tab="params">Parameters</button>
     </nav>
     <span class="checked" id="checked"></span>
+    <div class="unit-seg" role="group" aria-label="Area unit"><button data-unit-btn="ft">ft²</button><button data-unit-btn="m">m²</button></div>
     <button class="cloud-btn" id="cloudBtn" aria-label="Cloud save and share"></button>
   </div>
 </header>
@@ -180,7 +181,7 @@
               <p class="help">Lay sports tiles on the existing concrete instead of a €60k+ sprung wooden floor. Use adjustable or wall-mounted hoops,
                 prefab rooms and second-hand kit where possible. Negotiate a rent-free fit-out period with the landlord.</p></div></details>
           <details class="fold" style="margin-top:0"><summary>📦 What the store room holds <span class="hint">why it needs ~40 m²</span></summary>
-            <div class="fold-body"><div class="table-scroll"><table><thead><tr><th>Item</th><th class="l">Quantity</th><th>Floor space</th></tr></thead><tbody id="storeList"></tbody></table></div><div id="storeReset"></div></div></details>
+            <div class="fold-body"><div class="table-scroll"><table><thead><tr><th>Item</th><th class="l">Quantity</th><th>Floor space (m²)</th></tr></thead><tbody id="storeList"></tbody></table></div><div id="storeReset"></div></div></details>
         </div>
       </div>
       <div class="cols-2" style="margin-top:14px">
@@ -343,9 +344,9 @@
   </aside>
 </div>
 
-<script src="assets/data.js?v=11"></script>
-<script src="assets/app.js?v=11"></script>
+<script src="assets/data.js?v=12"></script>
+<script src="assets/app.js?v=12"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js"></script>
-<script src="assets/cloud.js?v=11"></script>
+<script src="assets/cloud.js?v=12"></script>
 </body>
 </html>

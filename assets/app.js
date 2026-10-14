@@ -68,6 +68,69 @@ function paintRange(el) {
 const paintAll = () => document.querySelectorAll("input[type=range]").forEach(paintRange);
 document.addEventListener("input", e => { if (e.target.type === "range") paintRange(e.target); });
 
+
+// ---------------------------------------------------------------------
+// UNITS. The model works in metric; the page shows square feet by default
+// with a ft² / m² switch in the header. Text is converted on the fly (a
+// MutationObserver rewrites "608 m²", "28 × 15 m", "€9/m²" etc. into feet
+// and restores the original when switching back); input fields and
+// money-per-area values convert explicitly.
+// ---------------------------------------------------------------------
+const FT2 = 10.7639, FT = 3.28084;
+let UNIT = (() => { try { return localStorage.getItem("bball-unit") || "ft"; } catch { return "ft"; } })();
+const toDispArea = m2 => UNIT === "ft" ? m2 * FT2 : m2;
+const fromDispArea = v => UNIT === "ft" ? v / FT2 : v;
+const perArea = eurPerM2 => UNIT === "ft" ? eurPerM2 / FT2 : eurPerM2;     // € per m² → € per shown unit
+const fromPerArea = v => UNIT === "ft" ? v * FT2 : v;
+const AREA_KEYS = new Set(["courtArea", ...ROOMS.map(r => r[0])]);
+const PERAREA_KEYS = new Set(["rentPerM2", "utilPerM2", "gymEquipPerM2", "gymFloorPerM2"]);
+const dispField = (k, v) => AREA_KEYS.has(k) ? Math.round(toDispArea(v)) : PERAREA_KEYS.has(k) ? Math.round(perArea(v) * 1000) / 1000 : v;
+const rawField = (k, v) => AREA_KEYS.has(k) ? fromDispArea(v) : PERAREA_KEYS.has(k) ? fromPerArea(v) : v;
+
+const pnum = s => Number(String(s).replace(/,/g, ""));
+const fmtConv = (n, f) => { const v = n * f; return v >= 10 ? Math.round(v).toLocaleString("en-IE") : v.toFixed(1); };
+function toImperial(t) {
+  if (t.indexOf("m") < 0) return t;
+  return t
+    .replace(/€\s?(\d+(?:\.\d+)?)(?:\s?([–-])\s?(\d+(?:\.\d+)?))?\s?\/\s?m²/g,
+      (_, a, d, b) => "€" + (pnum(a) / FT2).toFixed(2) + (b ? d + (pnum(b) / FT2).toFixed(2) : "") + "/ft²")
+    .replace(/(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s?m²/g, (_, n) => fmtConv(pnum(n), FT2) + " ft²")
+    .replace(/(\d+(?:\.\d+)?)\s?×\s?(\d+(?:\.\d+)?)\s?m\b/g, (_, a, b) => fmtConv(+a, FT) + " × " + fmtConv(+b, FT) + " ft")
+    .replace(/(\d+(?:\.\d+)?)\s?m(\+?)(?=[\s,.;:)·/]|$)/g, (_, n, plus) => fmtConv(+n, FT) + " ft" + plus)
+    .replace(/m²/g, "ft²");
+}
+const unitOrig = new WeakMap();
+function convNode(node) {
+  const cur = node.nodeValue;
+  let o = unitOrig.get(node);
+  if (o === undefined || (cur !== o && cur !== toImperial(o))) { o = cur; unitOrig.set(node, o); }
+  const want = UNIT === "ft" ? toImperial(o) : o;
+  if (cur !== want) node.nodeValue = want;
+}
+function convTree(root) {
+  if (!root) return;
+  if (root.nodeType === 3) return convNode(root);
+  if (root.nodeType !== 1 || /^(SCRIPT|STYLE|TEXTAREA)$/.test(root.nodeName)) return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let n; (n = w.nextNode());) if (unitOrig.has(n) || n.nodeValue.indexOf("m") >= 0) convNode(n);
+}
+if (typeof MutationObserver !== "undefined") {
+  new MutationObserver(list => {
+    for (const mu of list) {
+      if (mu.type === "characterData") convNode(mu.target);
+      else mu.addedNodes.forEach(convTree);
+    }
+  }).observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setUnit(u) {
+  UNIT = u === "m" ? "m" : "ft";
+  try { localStorage.setItem("bball-unit", UNIT); } catch {}
+  document.querySelectorAll("[data-unit-btn]").forEach(b => b.classList.toggle("on", b.dataset.unitBtn === UNIT));
+  if (typeof renderAll === "function" && typeof A !== "undefined") { buildAssumptions(); renderWhy(); renderAll(); paintAll(); }
+  convTree(document.body);
+}
+document.addEventListener("click", e => { const b = e.target.closest("[data-unit-btn]"); if (b) setUnit(b.dataset.unitBtn); });
+
 // ---------------------------------------------------------------------
 // Saved state
 // ---------------------------------------------------------------------
@@ -318,9 +381,9 @@ LEVERS.forEach(l => $("l_" + l.k).addEventListener("input", e => { A[l.k] = Numb
 function buildAssumptions() {
   $("groups").innerHTML = GROUPS.map(g => `<div class="group"><h3>${g.title}</h3>
     ${g.fields.map(([k, label]) => `<div class="field"><label for="f_${k}">${label}</label>
-      <input id="f_${k}" data-k="${k}" type="number" min="0" step="any" inputmode="decimal" value="${A[k]}"></div>`).join("")}</div>`).join("");
+      <input id="f_${k}" data-k="${k}" type="number" min="0" step="any" inputmode="decimal" value="${dispField(k, A[k])}"></div>`).join("")}</div>`).join("");
   $("groups").querySelectorAll("input").forEach(inp => inp.addEventListener("input", () => {
-    A[inp.dataset.k] = Math.max(0, Number(inp.value) || 0); preset = ""; if (inp.dataset.k in BUILDS.lean) build = ""; save(); renderAll();
+    A[inp.dataset.k] = rawField(inp.dataset.k, Math.max(0, Number(inp.value) || 0)); preset = ""; if (inp.dataset.k in BUILDS.lean) build = ""; save(); renderAll();
   }));
 }
 function syncInputs() { LEVERS.forEach(l => $("l_" + l.k).value = A[l.k]); $("fill").value = TTF.fill; buildAssumptions(); paintAll(); }
@@ -457,7 +520,7 @@ function renderCalc(m) {
       { label: "Setup before opening", value: short(m.setup * n), sub: build === "lean" ? "Lean start" : build === "full" ? "Full build" : "Custom build" },
       { label: "Ramp-up cost", value: short(R.rampLoss * n), sub: `Until month ${R.beMonth || ">24"}` },
       { label: "Grants used", value: short(m.grant * n), sub: `${P.grantPct}% of fit-out`, go: "funding" },
-      { label: "Per m²", value: eur(m.perHubInvest / m.totalArea), sub: "Investment ÷ floor area" },
+      { label: "Per m²", value: eur(perArea(m.perHubInvest / m.totalArea)), sub: "Cash needed ÷ floor area" },
       { label: "Per kid place", value: m.capacity ? short(m.perHubInvest / m.capacity) : "–", sub: `${fmtInt(m.capacity)} places` },
     ]],
     ["Students & space", [
@@ -471,7 +534,7 @@ function renderCalc(m) {
       { label: "Lifetime value / kid", value: eur(m.ltv), sub: `${m.lifetimeMonths.toFixed(0)} months average stay` },
       { label: "Value ÷ acquisition cost", value: P.cac ? (m.ltv / P.cac).toFixed(1) + "×" : "∞", sub: "Above 3× is healthy" },
       { label: "Acquisition payback", value: P.cac ? (P.cac / P.kidsFee).toFixed(1) + " mo" : "0", sub: "Months of fees" },
-      { label: "Revenue / m² / yr", value: eur(m.revenue * 12 / m.totalArea), sub: "How hard the space works" },
+      { label: "Revenue / m² / yr", value: eur(perArea(m.revenue * 12 / m.totalArea)), sub: "How hard the space works" },
       { label: "Cost / member / mo", value: eur(m.monthlyCost / Math.max(1, m.members + P.adults)), sub: "All members" },
     ]],
   ];
@@ -638,7 +701,7 @@ function renderWhy() {
     ["Official court size", m => m.s.court.join(" × ") + " m"], ["Space one court needs", m => `${fmtInt(m.fpArea)} m²`],
     ["Minimum ceiling", m => m.s.ceiling + " m"], ["Kids per coach", m => m.s.range], [`Courts in ${fmtInt(WHY.area)} m²`, m => m.fit.count],
     ["Kids at once", m => fmtInt(m.students)], ["Coaches needed", m => m.coaches], ["Fit-out per court", m => eur(m.s.courtCost)],
-    ["Total fit-out", m => eur(m.investment)], ["Fit-out per m²", m => eur(m.invPerM2)], ["Fit-out per kid place", m => eur(m.invPerPlace)],
+    ["Total fit-out", m => eur(m.investment)], ["Fit-out per m²", m => eur(perArea(m.invPerM2))], ["Fit-out per kid place", m => eur(m.invPerPlace)],
     ["Floor space per kid", m => m.m2PerKid.toFixed(1) + " m²"], ["Coach cost per kid-hour", m => "€" + m.coachPerKidHr.toFixed(2)], ["Space used", m => pct(m.usedPct)],
   ];
   $("sportTable").innerHTML = `<thead><tr><th>Metric</th>${ms.map(m => `<th>${m.s.icon} ${m.s.name}</th>`).join("")}</tr></thead><tbody>` +
@@ -1079,15 +1142,15 @@ function followLinks(prefix) {
   if (prefix.startsWith("store")) A.storeArea = storeNeeded();
 }
 const num2 = v => Math.round(v * 100) / 100;
-const cellIn = (path, value, label, cls = "cell-in") =>
-  `<input class="${cls}" type="number" min="0" step="any" inputmode="decimal" data-edit="${path}" value="${num2(value)}" aria-label="${label}" title="Edit: ${label}">`;
+const cellIn = (path, value, label, cls = "cell-in", unit = "") =>
+  `<input class="${cls}" type="number" min="0" step="any" inputmode="decimal" data-edit="${path}"${unit ? ` data-unit="${unit}"` : ""} value="${num2(value)}" aria-label="${label}" title="Edit: ${label}">`;
 const resetBtn = (prefix, label = "Reset these numbers") =>
   Object.keys(EDITS).some(p => p.startsWith(prefix)) ? `<button class="btn" data-reset-edits="${prefix}" style="margin-top:10px">↺ ${label}</button>` : "";
 
 document.addEventListener("change", e => {
   const el = e.target.closest("[data-edit]");
   if (!el) return;
-  const path = el.dataset.edit, v = Number(el.value);
+  const path = el.dataset.edit, v = el.dataset.unit === "area" ? fromDispArea(Number(el.value)) : Number(el.value);
   if (el.value === "" || !applyEdit(path, v)) { el.value = ""; renderAll(); return; }
   EDITS[path] = v;
   relink(); followLinks(path);
@@ -1128,7 +1191,7 @@ function renderEditables(m) {
   $("leanReset").innerHTML = resetBtn("lean.");
   // Store room
   const need = STORE_ITEMS.reduce((s, i) => s + i[2], 0);
-  $("storeList").innerHTML = STORE_ITEMS.map(([k, q, a], i) => `<tr><td>${k}</td><td class="l muted">${q}</td><td>${cellIn(`store.${i}`, a, k + " (m²)")}</td></tr>`).join("") +
+  $("storeList").innerHTML = STORE_ITEMS.map(([k, q, a], i) => `<tr><td>${k}</td><td class="l muted">${q}</td><td>${cellIn(`store.${i}`, toDispArea(a), k, "cell-in", "area")}</td></tr>`).join("") +
     `<tr><td class="muted">Aisles & access (~25%)</td><td></td><td>${(need * 0.25).toFixed(1)} m²</td></tr>
      <tr class="total"><td>Store room needed (sets the store-room size)</td><td></td><td>${storeNeeded()} m²</td></tr>`;
   $("storeReset").innerHTML = resetBtn("store.");
@@ -1208,3 +1271,5 @@ renderFunding();
 renderAll();
 setHeaderHeight();
 showTab(location.hash.slice(1));
+document.querySelectorAll("[data-unit-btn]").forEach(b => b.classList.toggle("on", b.dataset.unitBtn === UNIT));
+convTree(document.body);
