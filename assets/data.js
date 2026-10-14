@@ -138,6 +138,52 @@ const CONVERSION_KIT = [
 ];
 
 // ---------------------------------------------------------------------
+// LEAN START: the first warehouse. Rooms around the court (m², editable in
+// the calculator) and what the store room has to hold.
+// [key, label, icon, default m², colour]
+// ---------------------------------------------------------------------
+const ROOMS = [
+  ["officeArea",    "Office",                 "🗂️", 15, "#a78bfa"],
+  ["changingArea",  "Changing room & WC",     "🚿", 34, "#3b82f6"],
+  ["lockerArea",    "Lockers",                "🔐", 10, "#14b8a6"],
+  ["storeArea",     "Store room",             "📦", 40, "#eab308"],
+  ["receptionArea", "Entrance & reception",   "🚪", 10, "#64748b"],
+];
+// [item, quantity, floor space m²]
+const STORE_ITEMS = [
+  ["Basketballs on rolling racks", "60 balls · 3 racks", 2.5],
+  ["Yoga mats & blocks (wall rack)", "30 sets", 2],
+  ["Pickleball nets (portable)", "3 nets", 3],
+  ["Badminton posts & nets", "3 courts · 6 posts", 4],
+  ["Mini-basketball hoops (adjustable)", "2 hoops", 4],
+  ["Volleyball posts & net", "1 set", 2],
+  ["Cones, bibs, agility ladders, hurdles", "shelving", 3],
+  ["Portable handball / futsal goals", "2 goals", 3],
+  ["Floor protection covers", "rolls", 3],
+  ["Scrubber-dryer & cleaning kit", "1 machine", 2],
+  ["Spare kit, first aid, merchandise stock", "shelving", 3],
+];
+// Two ways to build the hub. Lean = start small and add the rest once the
+// academy is full. Values override the calculator's assumptions.
+const BUILDS = {
+  lean: { courtArea: 540, courtFitout: 35000, gymArea: 0, gymMembers: 0, supportFitout: 20000, convKit: 6000,
+          launch: 5000, legal: 4000, depositMonths: 2, asstCoaches: 1, admin: 0, cleaning: 600, brand: 500 },
+  full: { courtArea: 608, courtFitout: 120000, gymArea: 200, gymMembers: 80, supportFitout: 40000, convKit: 24500,
+          launch: 10000, legal: 8000, depositMonths: 3, asstCoaches: 2, admin: 2000, cleaning: 1200, brand: 800 },
+};
+const LEAN_FITOUT = [
+  ["Modular sports-floor tiles on the existing concrete (~540 m²)", 15000],
+  ["2 adjustable main hoops + 4 wall-mounted side baskets", 12000],
+  ["LED high-bay lighting", 8000],
+  ["Prefab changing room + 2 WCs/showers", 10000],
+  ["30 lockers", 3000],
+  ["Office furniture & IT", 2500],
+  ["Store-room shelving & racks", 2500],
+  ["Entrance, reception desk & signage", 2000],
+  ["Starter multi-use kit: badminton & pickleball nets, yoga mats", 6000],
+];
+
+// ---------------------------------------------------------------------
 // Revenue streams catalogue  [name, typical price, in calculator?, description]
 // ---------------------------------------------------------------------
 const STREAMS = [
@@ -363,7 +409,7 @@ const DEAL_TYPES = [
 ];
 const ROADMAP = [
   { phase: "Phase 1", when: "Months 0–12", title: "The Hub: one warehouse academy",
-    what: ["Lease a small warehouse and fit out 1 basketball court + fitness zone", "Launch the kids academy (ages 8–18) and the multi-use timetable", "Prove the model: reach break-even occupancy"],
+    what: ["Lease a small warehouse: 1 court, office, small changing room, lockers and a big store room (fitness zone added later)", "Launch the kids academy (ages 8–18) and the multi-use timetable", "Prove the model: reach break-even before spending more"],
     kpi: "150+ kids enrolled · break-even occupancy reached" },
   { phase: "Phase 2", when: "Months 6–18", title: "Coach academy",
     what: ["Train and certify coaches in-house using the hub's own court", "Write the curriculum and session plans", "Build a bench of coaches ready to staff new sites"],
@@ -425,6 +471,8 @@ const PARAMS = [
     ["Partner-venue model: vacant schools, community centres, colleges, courts, pools, table tennis", "Partner venues"],
     ["We provide the investment, programmes, software and tech support, on a profit-sharing basis", "Partner venues: deal structures"],
     ["Hire talented coaches and support staff", "Partner venues · Mission"],
+    ["Start lean: a small warehouse with a court, office, small changing room, lockers and a big store room for all equipment", "Hub calculator: Lean start build, floor plan, store room"],
+    ["Investor-grade view of the money needed, month by month", "Hub calculator: 24-month cash flow"],
   ]},
   { group: "Multi-use court & timetable", items: [
     ["Convert the court for other uses: badminton nets, yoga, dance, handball, pickleball", "Timetable"],

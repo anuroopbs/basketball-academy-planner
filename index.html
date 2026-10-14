@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=9">
+<link rel="stylesheet" href="assets/styles.css?v=10">
 </head>
 <body>
 
@@ -148,7 +148,11 @@
   <div class="summary-bar"><div class="row" id="calcSummary"></div></div>
   <div class="split">
     <aside class="sticky-side"><div class="lever-box">
-      <h3>Scenario</h3>
+      <h3>Build</h3>
+      <div class="seg" id="builds">
+        <button data-build="lean">🪶 Lean start</button><button data-build="full">🏗️ Full build</button>
+      </div>
+      <h3>Demand scenario</h3>
       <div class="seg" id="presets">
         <button data-preset="conservative">🐢 Cautious</button><button data-preset="base">⚖️ Base</button><button data-preset="optimistic">🚀 Strong</button>
       </div>
@@ -158,10 +162,23 @@
     </div></aside>
     <div>
       <div class="page-head" style="margin-bottom:6px"><div><div class="eyebrow">Numbers · one hub</div><h1>Hub calculator</h1>
-        <p>A hub = basketball court + CrossFit-style fitness zone + changing rooms and reception. Move a lever and everything updates.
-          The number of academy slots comes from the <a href="#timetable">Timetable</a>.</p></div></div>
+        <p><b>Lean start:</b> a small warehouse with a court, office, small changing room, lockers and a big store room. The fitness zone comes later.
+          Switch to <b>Full build</b> to compare. Move a lever and everything updates. Academy slots come from the <a href="#timetable">Timetable</a>.</p></div></div>
       <div id="calcRisk"></div>
       <div id="calcKpis"></div>
+      <div class="card chart" style="margin-top:14px"><div class="sec" style="margin-top:0"><h2>First 24 months: cash flow</h2><span class="sub" id="cashSub"></span></div><div id="cashChart"></div></div>
+      <div class="split-r" style="margin-top:14px">
+        <div class="card chart"><div class="sec" style="margin-top:0"><h2>Warehouse layout (to scale)</h2><span class="sub" id="floorSub"></span></div>
+          <div id="floorPlan"></div><div class="legend" id="roomLegend"></div></div>
+        <div class="stack-gap">
+          <details class="fold" open style="margin-top:0"><summary>🪶 Lean fit-out: what we buy <span class="hint">reuse the shell, buy smart</span></summary>
+            <div class="fold-body"><div class="table-scroll"><table><tbody id="leanList"></tbody></table></div>
+              <p class="help">Lay sports tiles on the existing concrete instead of a €60k+ sprung wooden floor. Use adjustable or wall-mounted hoops,
+                prefab rooms and second-hand kit where possible. Negotiate a rent-free fit-out period with the landlord.</p></div></details>
+          <details class="fold" style="margin-top:0"><summary>📦 What the store room holds <span class="hint">why it needs ~40 m²</span></summary>
+            <div class="fold-body"><div class="table-scroll"><table><thead><tr><th>Item</th><th class="l">Quantity</th><th>Floor space</th></tr></thead><tbody id="storeList"></tbody></table></div></div></details>
+        </div>
+      </div>
       <div class="cols-2" style="margin-top:14px">
         <div class="card chart"><div class="sec" style="margin-top:0"><h2>Profit vs occupancy</h2><span class="sub">per hub / month</span></div><div id="occChart"></div></div>
         <div class="card"><div class="sec" style="margin-top:0"><h2>Revenue mix</h2><span class="sub" id="revSub"></span></div><div id="revDonut"></div></div>
@@ -320,9 +337,9 @@
   </aside>
 </div>
 
-<script src="assets/data.js?v=9"></script>
-<script src="assets/app.js?v=9"></script>
+<script src="assets/data.js?v=10"></script>
+<script src="assets/app.js?v=10"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js"></script>
-<script src="assets/cloud.js?v=9"></script>
+<script src="assets/cloud.js?v=10"></script>
 </body>
 </html>

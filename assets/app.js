@@ -71,12 +71,12 @@ document.addEventListener("input", e => { if (e.target.type === "range") paintRa
 // ---------------------------------------------------------------------
 // Saved state
 // ---------------------------------------------------------------------
-const STORE_KEY = "bball-planner-v5";
+const STORE_KEY = "bball-planner-v6";
 const saved = (() => { try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); } catch { return {}; } })();
 // Cloud sync (cloud.js) sets this to be told about every change.
 let onStateChange = null;
 function save() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify({ A, W, BW, WHY, TT, TTF, PN, slide, preset })); } catch {}
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({ A, W, BW, WHY, TT, TTF, PN, slide, preset, build })); } catch {}
   if (onStateChange) onStateChange();
 }
 
@@ -168,8 +168,8 @@ const LEVERS_COURT = [
   { k: "campWeeks", label: "Holiday camp weeks / year",        min: 0,  max: 16,  step: 1,  v: 8 },
 ];
 const LEVERS_OTHER = [
-  { k: "gymArea",    label: "Fitness zone size",               min: 0,  max: 400,  step: 10, v: 200, fmt: v => v + " m²" },
-  { k: "gymMembers", label: "Fitness members",                 min: 0,  max: 300,  step: 5,  v: 80 },
+  { k: "gymArea",    label: "Fitness zone size",               min: 0,  max: 400,  step: 10, v: 0,   fmt: v => v ? v + " m²" : "Later" },
+  { k: "gymMembers", label: "Fitness members",                 min: 0,  max: 300,  step: 5,  v: 0 },
   { k: "gymFee",     label: "Fitness monthly fee",             min: 30, max: 150,  step: 5,  v: 65,  fmt: v => "€" + v },
   { k: "adults",     label: "Adult basketball members",        min: 0,  max: 200,  step: 5,  v: 40 },
   { k: "pickup",     label: "Pickup visits / month",           min: 0,  max: 1000, step: 10, v: 250 },
@@ -178,19 +178,21 @@ const LEVERS_OTHER = [
 const LEVERS = [...LEVERS_COURT, ...LEVERS_OTHER];
 const GROUPS = [
   { title: "Space & rent", fields: [
-    ["courtArea", "Court footprint (m²)", 608], ["supportArea", "Changing, reception, storage (m²)", 150],
-    ["rentPerM2", "Rent per m² / month (€)", 9], ["utilPerM2", "Utilities per m² / month (€)", 2.5], ["depositMonths", "Rent deposit (months)", 3] ]},
-  { title: "Students", fields: [ ["perKid", "Sessions per kid per week", 2], ["churnPct", "Students leaving per month (%)", 4] ]},
+    ["courtArea", "Court footprint (m²)", BUILDS.lean.courtArea],
+    ...ROOMS.map(([k, label, , v]) => [k, `${label} (m²)`, v]),
+    ["rentPerM2", "Rent per m² / month (€)", 9], ["utilPerM2", "Utilities per m² / month (€)", 2.5], ["depositMonths", "Rent deposit (months)", BUILDS.lean.depositMonths] ]},
+  { title: "Students & ramp-up", fields: [ ["perKid", "Sessions per kid per week", 2], ["churnPct", "Students leaving per month (%)", 4],
+    ["startPct", "Month 1 demand (% of target)", 20], ["rampMonths", "Months to reach target", 12] ]},
   { title: "One-time setup (€)", fields: [
-    ["courtFitout", "Court fit-out (floor, hoops, lights)", 120000], ["gymEquipPerM2", "Fitness equipment per m²", 200],
-    ["gymFloorPerM2", "Rubber flooring per m²", 45], ["supportFitout", "Changing rooms & reception", 40000],
-    ["convKit", "Multi-use conversion kit", kitTotal], ["launch", "Launch marketing", 10000],
-    ["legal", "Legal, insurance, company setup", 8000], ["bufferMonths", "Months of costs kept as buffer", 3] ]},
+    ["courtFitout", "Court fit-out (floor, hoops, lights)", BUILDS.lean.courtFitout], ["gymEquipPerM2", "Fitness equipment per m²", 200],
+    ["gymFloorPerM2", "Rubber flooring per m²", 45], ["supportFitout", "Rooms fit-out (office, changing, lockers, store)", BUILDS.lean.supportFitout],
+    ["convKit", "Multi-use conversion kit", BUILDS.lean.convKit], ["launch", "Launch marketing", BUILDS.lean.launch],
+    ["legal", "Legal, insurance, company setup", BUILDS.lean.legal] ]},
   { title: "Staff per month (€)", fields: [
-    ["headCoach", "Head coach", 3800], ["asstCoaches", "Assistant coaches (number)", 2], ["asstSalary", "Salary per assistant", 2000],
-    ["gymCoach", "Fitness coach", 2800], ["admin", "Admin / front desk", 2000], ["cleaning", "Cleaning & maintenance", 1200] ]},
+    ["headCoach", "Head coach", 3800], ["asstCoaches", "Assistant coaches (number)", BUILDS.lean.asstCoaches], ["asstSalary", "Salary per assistant", 2000],
+    ["gymCoach", "Fitness coach", 2800], ["admin", "Admin / front desk", BUILDS.lean.admin], ["cleaning", "Cleaning & maintenance", BUILDS.lean.cleaning] ]},
   { title: "Other monthly costs (€)", fields: [
-    ["insurance", "Insurance", 900], ["software", "Booking & payment software", 300], ["maintenance", "Repairs & upkeep", 500], ["brand", "Brand marketing", 800] ]},
+    ["insurance", "Insurance", 900], ["software", "Booking & payment software", 300], ["maintenance", "Repairs & upkeep", 500], ["brand", "Brand marketing", BUILDS.lean.brand] ]},
   { title: "Other revenue", fields: [
     ["adultFee", "Adult monthly fee (€)", 45], ["pickupFee", "Pickup fee per visit (€)", 7], ["campKids", "Kids per camp week", 40],
     ["campFee", "Camp fee per kid / week (€)", 180], ["campCostPct", "Camp running cost (% of camp revenue)", 40],
@@ -205,11 +207,13 @@ const PRESETS = {
   optimistic:   { occ: 85, kidsFee: 80, cac: 40, churnPct: 3, gymMembers: 120, rentPerM2: 8, fill: 80 },
 };
 let preset = saved.preset ?? "base";
+let build = saved.build ?? "lean";
+const roomsArea = P => ROOMS.reduce((s, [k]) => s + (P[k] || 0), 0);
 
 function compute(over = {}) {
   const P = { ...A, fill: TTF.fill, ...over };
   const n = P.n, tt = ttStats(P);
-  const totalArea = P.courtArea + P.gymArea + P.supportArea;
+  const totalArea = P.courtArea + P.gymArea + roomsArea(P);
   const capacity = Math.floor(tt.kidsSessions * P.group / Math.max(1, P.perKid));
   const kids = Math.round(capacity * P.occ / 100);
   const churn = P.churnPct / 100;
@@ -243,26 +247,61 @@ function compute(over = {}) {
   const gymEquip = P.gymArea * P.gymEquipPerM2, gymFloor = P.gymArea * P.gymFloorPerM2;
   const fitout = P.courtFitout + gymEquip + gymFloor + P.supportFitout + P.convKit;
   const grant = fitout * P.grantPct / 100;
+  // One-time setup paid before opening. Ramp-up losses and member acquisition
+  // are added by rampUp() from the month-by-month cash flow.
   const inv = [
     ["Court fit-out", P.courtFitout],
     ["Fitness equipment & floor", gymEquip + gymFloor],
-    ["Changing rooms & reception", P.supportFitout],
+    ["Rooms (office, changing, lockers, store)", P.supportFitout],
     ["Multi-use kit", P.convKit],
     ["Launch, legal & setup", P.launch + P.legal],
     ["Rent deposit", rent * P.depositMonths],
-    ["First members (acquisition)", P.cac * members],
-    ["Cash buffer", monthlyCost * P.bufferMonths],
   ];
   if (grant) inv.push(["Less grants", -grant]);
-  const perHubInvest = inv.reduce((s, [, v]) => s + v, 0);
+  const setup = inv.reduce((s, [, v]) => s + v, 0);
+  const perHubInvest = setup;
   const perKidMargin = P.kidsFee - P.cac * churn;
   const profitNoKids = profit - kids * perKidMargin;
   const breakEvenOcc = profitNoKids >= 0 ? 0 : (perKidMargin > 0 && capacity > 0 ? -profitNoKids / (capacity * perKidMargin) : Infinity);
   const coaches = 1 + P.asstCoaches + (P.gymArea > 0 ? 1 : 0);
   const lifetimeMonths = churn > 0 ? 1 / churn : 0;
   return { P, n, tt, totalArea, capacity, kids, members, streams, revenue, costs, monthlyCost, profit,
-    fitout, grant, inv, perHubInvest, investment: perHubInvest * n,
+    fitout, grant, inv, setup, perHubInvest, investment: perHubInvest * n,
     payback: profit > 0 ? perHubInvest / profit : null, breakEvenOcc, coaches, lifetimeMonths, ltv: P.kidsFee * lifetimeMonths };
+}
+
+// Month-by-month cash flow for the first 24 months. Demand starts at
+// startPct% of target and grows linearly to 100% over rampMonths. The
+// lowest point of cumulative cash is the money really needed.
+function rampUp(m, months = 24) {
+  const P = m.P, s = clamp(P.startPct / 100, 0, 1), rm = Math.max(1, P.rampMonths);
+  let cum = -m.setup, low = cum, prevMembers = 0, beMonth = null, payMonth = null;
+  const series = [];
+  for (let t = 1; t <= months; t++) {
+    const r = s + (1 - s) * Math.min(1, (t - 1) / Math.max(1, rm - 1));
+    const mt = compute({ occ: P.occ * r, fill: P.fill * r, gymMembers: P.gymMembers * r, adults: P.adults * r, pickup: P.pickup * r,
+      privateHrs: P.privateHrs * r, parties: P.parties * r, campKids: P.campKids * r });
+    const acq = Math.max(0, mt.members - prevMembers) * P.cac;
+    prevMembers = mt.members;
+    const cash = mt.profit - acq;
+    cum += cash; low = Math.min(low, cum);
+    if (beMonth === null && cash >= 0) beMonth = t;
+    if (payMonth === null && cum >= 0) payMonth = t;
+    series.push({ t, r, cash, cum, revenue: mt.revenue });
+  }
+  const last = series[months - 1].cash;
+  if (payMonth === null && last > 0) payMonth = months + Math.ceil(-cum / last);
+  return { series, peak: -low, beMonth, payMonth, rampLoss: -low - m.setup };
+}
+// compute() + the ramp-up: the numbers shown everywhere.
+function computeAll(over = {}) {
+  const m = compute(over);
+  m.ramp = rampUp(m);
+  m.perHubInvest = m.ramp.peak;
+  m.investment = m.ramp.peak * m.n;
+  m.payback = m.ramp.payMonth;
+  m.invRows = [...m.inv, ["Ramp-up: losses & winning members until break-even", m.ramp.rampLoss]];
+  return m;
 }
 const beoText = beo => beo === Infinity || beo > 1 ? `<span class="neg">${beo === Infinity ? "Never" : ">100%"}</span>` : beo === 0 ? `<span class="pos">0%</span>` : pct(beo);
 
@@ -274,18 +313,29 @@ function leverHtml(l, val, id) {
 }
 $("leversCourt").innerHTML = LEVERS_COURT.map(l => leverHtml(l, A[l.k], "l_")).join("");
 $("leversOther").innerHTML = LEVERS_OTHER.map(l => leverHtml(l, A[l.k], "l_")).join("");
-LEVERS.forEach(l => $("l_" + l.k).addEventListener("input", e => { A[l.k] = Number(e.target.value); preset = ""; save(); renderAll(); }));
+LEVERS.forEach(l => $("l_" + l.k).addEventListener("input", e => { A[l.k] = Number(e.target.value); preset = ""; if (l.k in BUILDS.lean) build = ""; save(); renderAll(); }));
 
 function buildAssumptions() {
   $("groups").innerHTML = GROUPS.map(g => `<div class="group"><h3>${g.title}</h3>
     ${g.fields.map(([k, label]) => `<div class="field"><label for="f_${k}">${label}</label>
       <input id="f_${k}" data-k="${k}" type="number" min="0" step="any" inputmode="decimal" value="${A[k]}"></div>`).join("")}</div>`).join("");
   $("groups").querySelectorAll("input").forEach(inp => inp.addEventListener("input", () => {
-    A[inp.dataset.k] = Math.max(0, Number(inp.value) || 0); preset = ""; save(); renderAll();
+    A[inp.dataset.k] = Math.max(0, Number(inp.value) || 0); preset = ""; if (inp.dataset.k in BUILDS.lean) build = ""; save(); renderAll();
   }));
 }
 function syncInputs() { LEVERS.forEach(l => $("l_" + l.k).value = A[l.k]); $("fill").value = TTF.fill; buildAssumptions(); paintAll(); }
-$("reset").addEventListener("click", () => { A = { ...DEFAULTS }; TTF.fill = 60; preset = "base"; save(); syncInputs(); renderAll(); });
+$("reset").addEventListener("click", () => { A = { ...DEFAULTS }; TTF.fill = 60; preset = "base"; build = "lean"; save(); syncInputs(); renderAll(); });
+document.querySelectorAll("[data-build]").forEach(b => b.addEventListener("click", () => {
+  build = b.dataset.build;
+  Object.assign(A, BUILDS[build]);
+  save(); syncInputs(); renderAll();
+}));
+$("leanList").innerHTML = LEAN_FITOUT.map(([k, v]) => `<tr><td>${k}</td><td>${eur(v)}</td></tr>`).join("") +
+  `<tr class="total"><td>Lean fit-out total</td><td>${eur(LEAN_FITOUT.reduce((s, [, v]) => s + v, 0))}</td></tr>`;
+const storeNeed = STORE_ITEMS.reduce((s, i) => s + i[2], 0);
+$("storeList").innerHTML = STORE_ITEMS.map(([k, q, a]) => `<tr><td>${k}</td><td class="l muted">${q}</td><td>${a} m²</td></tr>`).join("") +
+  `<tr><td class="muted">Aisles & access (~25%)</td><td></td><td>${(storeNeed * 0.25).toFixed(1)} m²</td></tr>
+   <tr class="total"><td>Store room needed</td><td></td><td>≈ ${Math.ceil(storeNeed * 1.25)} m²</td></tr>`;
 document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => {
   preset = b.dataset.preset;
   Object.entries(PRESETS[preset]).forEach(([k, v]) => { if (k === "fill") TTF.fill = v; else A[k] = v; });
@@ -318,18 +368,88 @@ function occChartSvg(m) {
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly profit per hub at each occupancy">${g}</svg>`;
 }
 
+function cashChartSvg(R) {
+  const W = 760, H = 240, L = 58, Rr = 14, T = 16, B = 28, n = R.series.length;
+  const start = R.series[0].cum - R.series[0].cash;               // = minus the setup cost
+  const vals = R.series.flatMap(p => [p.cash, p.cum]).concat(start, 0);
+  const yMin = Math.min(...vals), yMax = Math.max(...vals);
+  const bw = (W - L - Rr) / n;
+  const x = t => L + (t - 0.5) * bw;
+  const y = v => T + (yMax - v) / ((yMax - yMin) || 1) * (H - T - B);
+  let g = "";
+  [yMax, 0, yMin].forEach(v => g += `<line x1="${L}" x2="${W - Rr}" y1="${y(v)}" y2="${y(v)}" stroke="${v === 0 ? "#475063" : "#1d222b"}"/>
+    <text x="${L - 8}" y="${y(v) + 4}" fill="#5c6474" font-size="11" text-anchor="end">${short(v)}</text>`);
+  R.series.forEach(p => {
+    const y0 = y(0), y1 = y(p.cash);
+    g += `<rect x="${x(p.t) - bw * .32}" y="${Math.min(y0, y1)}" width="${bw * .64}" height="${Math.max(1, Math.abs(y1 - y0))}" rx="2" fill="${p.cash >= 0 ? "#22c55e" : "#ef4444"}" fill-opacity=".75"><title>Month ${p.t}: ${short(p.cash)}</title></rect>`;
+    if (p.t === 1 || p.t % 3 === 0) g += `<text x="${x(p.t)}" y="${H - 8}" fill="#5c6474" font-size="11" text-anchor="middle">${p.t}</text>`;
+  });
+  const line = `M${L},${y(start).toFixed(1)}` + R.series.map(p => `L${x(p.t).toFixed(1)},${y(p.cum).toFixed(1)}`).join("");
+  g += `<path d="${line}" fill="none" stroke="#ffb547" stroke-width="2.5" stroke-linejoin="round"/>`;
+  const lowP = R.series.reduce((a, p) => p.cum < a.cum ? p : a, R.series[0]);
+  const lowX = lowP.cum <= start ? x(lowP.t) : L, lowY = Math.min(lowP.cum, start);
+  g += `<circle cx="${lowX}" cy="${y(lowY)}" r="5" fill="#fff" stroke="#ff7a1a" stroke-width="3"/>
+    <text x="${clamp(lowX, L + 80, W - 90)}" y="${Math.min(H - B - 4, y(lowY) + 20)}" fill="#eef0f4" font-size="12" font-weight="800" text-anchor="middle">peak cash need ${short(R.peak)}</text>`;
+  if (R.beMonth) g += `<line x1="${x(R.beMonth) - bw / 2}" x2="${x(R.beMonth) - bw / 2}" y1="${T}" y2="${H - B}" stroke="#22c55e" stroke-dasharray="4 4"/>
+    <text x="${x(R.beMonth) - bw / 2 + 5}" y="${T + 10}" fill="#22c55e" font-size="11" font-weight="700">profitable from month ${R.beMonth}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cash flow, first 24 months">${g}</svg>
+    <div class="legend"><span><i style="background:#22c55e"></i>Monthly cash in</span><span><i style="background:#ef4444"></i>Monthly cash out</span>
+    <span><i style="background:#ffb547"></i>Cumulative cash (starts at minus the setup cost)</span><span>Payback: <b>${R.payMonth ? "month " + R.payMonth : "not in sight"}</b></span></div>`;
+}
+// To-scale warehouse plan: court on the left, fitness zone and rooms in strips beside it.
+function floorPlanSvg(P) {
+  const k = 10, pad = 1;
+  const cw = Math.sqrt(P.courtArea * 32 / 19), ch = P.courtArea / cw;
+  const court = P.courtArea >= 600 ? [28, 15] : [Math.max(10, Math.min(26, cw - 2)), Math.max(6, Math.min(14, ch - 2))];
+  const rooms = ROOMS.map(([key, label, icon, , color]) => ({ label, icon, color, a: P[key] || 0 })).filter(r => r.a > 0);
+  const rTotal = rooms.reduce((s, r) => s + r.a, 0), rw = rTotal / ch;
+  const gw = P.gymArea ? P.gymArea / ch : 0;
+  const Wm = cw + gw + rw, Hm = ch;
+  let g = `<rect x="${pad * k}" y="${pad * k}" width="${Wm * k}" height="${Hm * k}" fill="#0d1015" stroke="#5c6474" stroke-width="3"/>`;
+  const ox = pad + (cw - court[0]) / 2, oy = pad + (ch - court[1]) / 2, X = v => (ox + v) * k, Y = v => (oy + v) * k;
+  const mid = court[1] / 2, arc = Math.min(6.6, mid - 0.4);
+  g += `<rect x="${pad * k}" y="${pad * k}" width="${cw * k}" height="${ch * k}" fill="#ff7a1a" fill-opacity=".08"/>
+    <rect x="${X(0)}" y="${Y(0)}" width="${court[0] * k}" height="${court[1] * k}" fill="#c2733a" fill-opacity=".28" stroke="#ff9a3c" stroke-width="2"/>
+    <line x1="${X(court[0] / 2)}" x2="${X(court[0] / 2)}" y1="${Y(0)}" y2="${Y(court[1])}" stroke="#ff9a3c" stroke-width="1.5"/>
+    <circle cx="${X(court[0] / 2)}" cy="${Y(mid)}" r="${1.8 * k}" fill="none" stroke="#ff9a3c" stroke-width="1.5"/>`;
+  [0, 1].forEach(side => {
+    const edge = side ? court[0] : 0, bx = side ? court[0] - 1.575 : 1.575, kx = side ? court[0] - 5.8 : 0;
+    g += `<rect x="${X(kx)}" y="${Y(mid - 2.45)}" width="${5.8 * k}" height="${4.9 * k}" fill="none" stroke="#ff9a3c" stroke-width="1.5"/>
+      <path d="M${X(edge)},${Y(mid - arc)} L${X(bx)},${Y(mid - arc)} A${6.75 * k},${6.75 * k} 0 0 ${side ? 0 : 1} ${X(bx)},${Y(mid + arc)} L${X(edge)},${Y(mid + arc)}" fill="none" stroke="#ff9a3c" stroke-width="1.5"/>
+      <circle cx="${X(bx)}" cy="${Y(mid)}" r="${0.45 * k}" fill="none" stroke="#fff" stroke-width="2"/>`;
+  });
+  g += `<text x="${(pad + cw / 2) * k}" y="${(pad + ch) * k - 10}" fill="#ffb547" font-size="15" font-weight="800" text-anchor="middle">Court ${court[0].toFixed(0)} × ${court[1].toFixed(0)} m</text>`;
+  if (gw) g += `<rect x="${(pad + cw) * k}" y="${pad * k}" width="${gw * k}" height="${ch * k}" fill="#3b82f6" fill-opacity=".22" stroke="#3b82f6"/>
+    <text x="${(pad + cw + gw / 2) * k}" y="${(pad + ch / 2) * k}" fill="#93c5fd" font-size="14" font-weight="800" text-anchor="middle" transform="rotate(-90 ${(pad + cw + gw / 2) * k} ${(pad + ch / 2) * k})">Fitness ${fmtInt(P.gymArea)} m²</text>`;
+  let yy = pad;
+  const rx = pad + cw + gw;
+  rooms.forEach(r => {
+    const h = r.a / rw;
+    g += `<rect x="${rx * k}" y="${yy * k}" width="${rw * k}" height="${h * k}" fill="${r.color}" fill-opacity=".22" stroke="${r.color}"/>`;
+    if (h * k > 18) g += `<text x="${(rx + rw / 2) * k}" y="${(yy + h / 2) * k + 4}" fill="#eef0f4" font-size="${h * k > 36 ? 12 : 10}" font-weight="700" text-anchor="middle">${r.label.split(" ")[0]} ${fmtInt(r.a)} m²</text>`;
+    yy += h;
+  });
+  const VW = (Wm + pad * 2) * k, VH = (Hm + pad * 2) * k + 22;
+  g += `<text x="${VW / 2}" y="${VH - 4}" fill="#8b93a3" font-size="13" text-anchor="middle">Warehouse ≈ ${Wm.toFixed(0)} × ${Hm.toFixed(0)} m · 7 m+ clear height</text>`;
+  return `<svg viewBox="0 0 ${VW.toFixed(0)} ${VH.toFixed(0)}" role="img" aria-label="Warehouse floor plan">${g}</svg>`;
+}
+
 function renderCalc(m) {
   const n = m.n, P = m.P;
   LEVERS.forEach(l => $("l_v_" + l.k).textContent = l.fmt ? l.fmt(A[l.k]) : A[l.k]);
   document.querySelectorAll("#presets button").forEach(b => b.classList.toggle("on", b.dataset.preset === preset));
+  document.querySelectorAll("#builds button").forEach(b => b.classList.toggle("on", b.dataset.build === build));
+  const R = m.ramp;
   document.querySelectorAll(".thAll").forEach(th => th.textContent = `All ${plural(n, "hub", "hubs")}`);
 
   const sb = [
-    { hero: true, l: n > 1 ? `Investment (${n} hubs)` : "Investment", v: short(m.investment) },
+    { hero: true, l: n > 1 ? `Cash needed (${n} hubs)` : "Cash needed", v: short(m.investment) },
+    { l: "Setup", v: short(m.setup * n) },
     { l: "Revenue / mo", v: short(m.revenue * n) },
     { l: "Costs / mo", v: short(m.monthlyCost * n) },
     { l: "Profit / mo", v: sign(m.profit * n) },
     { l: "Margin", v: m.revenue ? `<span class="${m.profit >= 0 ? "pos" : "neg"}">${pct(m.profit / m.revenue)}</span>` : "–" },
+    { l: "Profitable from", v: R.beMonth ? `Month ${R.beMonth}` : `<span class="neg">&gt;24 mo</span>` },
     { l: "Payback", v: m.payback ? `${Math.ceil(m.payback)} mo` : `<span class="neg">Never</span>` },
     { l: "Break-even occ.", v: beoText(m.breakEvenOcc) },
     { l: "Kids", v: fmtInt(m.kids * n) },
@@ -339,8 +459,9 @@ function renderCalc(m) {
 
   const groups = [
     ["Money needed", [
-      { hero: true, label: "Total investment", value: short(m.investment), sub: `${short(m.perHubInvest)} per hub` },
-      { label: "Fit-out", value: short(m.fitout * n), sub: "Court, gym, rooms, kit" },
+      { hero: true, label: "Cash needed (peak)", value: short(m.investment), sub: "Setup + losses until break-even" },
+      { label: "Setup before opening", value: short(m.setup * n), sub: build === "lean" ? "Lean start" : build === "full" ? "Full build" : "Custom build" },
+      { label: "Ramp-up cost", value: short(R.rampLoss * n), sub: `Until month ${R.beMonth || ">24"}` },
       { label: "Grants used", value: short(m.grant * n), sub: `${P.grantPct}% of fit-out`, go: "funding" },
       { label: "Per m²", value: eur(m.perHubInvest / m.totalArea), sub: "Investment ÷ floor area" },
       { label: "Per kid place", value: m.capacity ? short(m.perHubInvest / m.capacity) : "–", sub: `${fmtInt(m.capacity)} places` },
@@ -366,14 +487,20 @@ function renderCalc(m) {
     booking rate on the <a href="#timetable">Timetable</a>.</div></div>` : "";
   $("calcKpis").innerHTML = groups.map(([t, list]) => `<div class="kpi-group-title">${t}</div><div class="kpis">${kpis(list)}</div>`).join("");
   $("occChart").innerHTML = occChartSvg(m);
+  $("cashChart").innerHTML = cashChartSvg(R);
+  $("cashSub").textContent = `month 1 at ${P.startPct}% of target, full by month ${P.rampMonths}`;
+  $("floorPlan").innerHTML = floorPlanSvg(P);
+  $("roomLegend").innerHTML = [["Court", P.courtArea, "#ff7a1a"], ...(P.gymArea ? [["Fitness zone", P.gymArea, "#3b82f6"]] : []), ...ROOMS.map(([k, l, , , c]) => [l, P[k], c])]
+    .map(([l, v, c]) => `<span><i style="background:${c}"></i>${l} <b>${fmtInt(v)} m²</b></span>`).join("");
+  $("floorSub").textContent = `${fmtInt(m.totalArea)} m² · rent ${short(m.totalArea * P.rentPerM2)}/mo`;
   $("revDonut").innerHTML = donut(m.streams.map(([l, v], i) => ({ label: l, value: v, color: PALETTE[i] })), short(m.revenue), "per month");
   $("costDonut").innerHTML = donut(m.costs.map(([l, v], i) => ({ label: l, value: v, color: PALETTE[(i + 3) % PALETTE.length] })), short(m.monthlyCost), "per month");
   $("revSub").textContent = `${m.streams.filter(s => s[1] > 0).length} streams`;
   $("costSub").textContent = `${pct(m.costs[0][1] / m.monthlyCost)} is rent`;
   const area = stackbar([{ label: "Court", value: P.courtArea, color: "#ff7a1a" }, { label: "Fitness", value: P.gymArea, color: "#3b82f6" },
-    { label: "Support", value: P.supportArea, color: "#64748b" }].map(i => ({ ...i, fmt: v => fmtInt(v) + " m²", inLabel: `${i.label} ${fmtInt(i.value)} m²` })), .15);
+    ...ROOMS.map(([k, l, , , c]) => ({ label: l, value: P[k], color: c }))].map(i => ({ ...i, fmt: v => fmtInt(v) + " m²", inLabel: `${i.label.split(" ")[0]} ${fmtInt(i.value)} m²` })), .15);
   $("areaBar").innerHTML = area.bar; $("areaLegend").innerHTML = area.legend;
-  const invB = stackbar(m.inv.filter(([, v]) => v > 0).map(([l, v], i) => ({ label: l, value: v, color: PALETTE[i] })), .12);
+  const invB = stackbar(m.invRows.filter(([, v]) => v > 0).map(([l, v], i) => ({ label: l, value: v, color: PALETTE[i] })), .12);
   $("invBar").innerHTML = invB.bar; $("invLegend").innerHTML = invB.legend;
   $("spaceSub").textContent = `${fmtInt(m.totalArea)} m² · ${short(m.perHubInvest)}`;
 
@@ -382,7 +509,7 @@ function renderCalc(m) {
     `<tr class="total"><td>${label}</td><td>${eur(total)}</td><td>${eur(total * n)}</td>${share ? "<td>100%</td>" : ""}</tr>`;
   $("revTable").innerHTML = tbl(m.streams, m.revenue, "Total revenue");
   $("costTable").innerHTML = tbl(m.costs, m.monthlyCost, "Total running cost");
-  $("invTable").innerHTML = tbl(m.inv, m.perHubInvest, "Total investment", false);
+  $("invTable").innerHTML = tbl(m.invRows, m.perHubInvest, "Cash needed (peak)", false);
   $("revHint").textContent = `${eur(m.revenue)} / month per hub`;
   $("costHint").textContent = `${eur(m.monthlyCost)} / month per hub`;
   $("invHint").textContent = `${eur(m.perHubInvest)} per hub`;
@@ -542,7 +669,7 @@ const PN_LEVERS = [
 const PN_FIXED = { setup: 4000, tech: 60, marketing: 150, managerPer: 15, manager: 3800, launch: 5000, sessionsPerKid: 1.5 };
 let PN = { ...Object.fromEntries(PN_LEVERS.map(l => [l.k, l.v])), ...(saved.PN || {}) };
 $("partnerLevers").innerHTML = PN_LEVERS.map(l => leverHtml(l, PN[l.k], "pn_")).join("");
-PN_LEVERS.forEach(l => $("pn_" + l.k).addEventListener("input", e => { PN[l.k] = Number(e.target.value); save(); const m = compute(); renderPartners(m); renderMission(m); renderDeck(); }));
+PN_LEVERS.forEach(l => $("pn_" + l.k).addEventListener("input", e => { PN[l.k] = Number(e.target.value); save(); const m = computeAll(); renderPartners(m); renderMission(m); renderDeck(); }));
 const ilist = list => list.map(([ic, t, d]) => `<div class="it"><div class="ic">${ic}</div><div><b>${t}</b><p>${d}</p></div></div>`).join("");
 $("venueTypes").innerHTML = ilist(VENUE_TYPES);
 $("weBring").innerHTML = ilist(WE_BRING);
@@ -807,7 +934,7 @@ $("roadmap").innerHTML = ROADMAP.map((p, i) => `<div class="phase" style="--o:${
 function renderMission(m) {
   const x = computeNetwork(), city = rankCities()[0], easy = rankCountries()[0];
   $("missionKpis").innerHTML = kpis([
-    { hero: true, label: "First hub investment", value: short(m.perHubInvest), sub: `Payback ${m.payback ? Math.ceil(m.payback) + " months" : "n/a"}`, go: "calc" },
+    { hero: true, label: "Cash needed: first hub", value: short(m.perHubInvest), sub: `${build === "lean" ? "Lean start · " : ""}payback ${m.payback ? m.payback + " mo" : "n/a"}`, go: "calc" },
     { hero: true, label: "Combined profit / month", value: sign(m.profit + x.profit), sub: `Hub + ${PN.venues} venues`, go: "partners" },
     { label: "Kids reached", value: fmtInt(m.kids + x.kidsReached), sub: `${fmtInt(m.kids)} hub + ${fmtInt(x.kidsReached)} venues`, go: "partners" },
     { label: "Court used", value: pct(m.tt.util), sub: `${Object.keys(m.tt.by).length} uses, 06–22h`, go: "timetable" },
@@ -832,7 +959,7 @@ function buildSlides(m) {
   return [
     `<div class="eyebrow">Investor deck</div><h2>Get every kid in Europe playing</h2>
      <p>Youth basketball (ages 8–18): one warehouse hub that trains coaches, then a network of partner schools and community centres.</p>
-     ${K([{ hero: true, label: "First hub", value: short(per) }, { label: "Kids reached", value: fmtInt(m.kids + x.kidsReached) },
+     ${K([{ hero: true, label: "Cash needed: first hub", value: short(per) }, { label: "Kids reached", value: fmtInt(m.kids + x.kidsReached) },
           { label: "Partner venues", value: PN.venues }, { label: "Combined profit / mo", value: sign(pr + x.profit) }])}`,
     `<div class="eyebrow">The problem</div><h2>Kids need somewhere close by to play, and the courts that exist sit empty</h2>
      <ul><li>Basketball is growing fast in Europe, but indoor courts and academies are scarce.</li>
@@ -848,8 +975,10 @@ function buildSlides(m) {
      <ul><li>06–10: early training, mini kids, women's yoga, seniors</li><li>10–16: school PE, badminton, pickleball, handball, corporate</li>
        <li>16–19: the kids academy (prime time)</li><li>19–22: dance rental, leagues, pickup basketball</li></ul>
      ${K([{ hero: true, label: "Court revenue / week", value: short(m.tt.weekRev) }, { label: "Visits / week", value: fmtInt(m.tt.people) }, { label: "Per court hour", value: eur(m.tt.used ? m.tt.weekRev / m.tt.used : 0) }])}`,
-    `<div class="eyebrow">The hub</div><h2>${short(per)} for ${fmtInt(m.totalArea)} m² of court + fitness zone</h2>
-     ${donut(m.inv.filter(([, v]) => v > 0).map(([l, v], i) => ({ label: l, value: v, color: PALETTE[i] })), short(per), "investment")}`,
+    `<div class="eyebrow">Start lean</div><h2>${short(m.setup)} to open a ${fmtInt(m.totalArea)} m² warehouse; ${short(per)} cash needed at the low point</h2>
+     <div class="chart" style="max-width:760px">${cashChartSvg(m.ramp)}</div>`,
+    `<div class="eyebrow">The hub</div><h2>Where the ${short(per)} goes</h2>
+     ${donut(m.invRows.filter(([, v]) => v > 0).map(([l, v], i) => ({ label: l, value: v, color: PALETTE[i] })), short(per), "cash needed")}`,
     `<div class="eyebrow">How the hub makes money</div><h2>${short(m.revenue)} revenue per month</h2>
      ${donut(m.streams.map(([l, v], i) => ({ label: l, value: v, color: PALETTE[i] })), short(m.revenue), "per month")}`,
     `<div class="eyebrow">Unit economics & break-even</div><h2>${pr >= 0 ? "Profitable" : "Loss-making"} at ${P.occ}% occupancy</h2>
@@ -874,7 +1003,7 @@ function buildSlides(m) {
   ];
 }
 function renderDeck() {
-  const slides = buildSlides(compute());
+  const slides = buildSlides(computeAll());
   slide = clamp(slide, 0, slides.length - 1);
   $("deck").innerHTML = slides.map((s, i) => `<div class="slide${i === slide ? " active" : ""}">${s}<div class="pg">${i + 1} / ${slides.length}</div></div>`).join("");
   $("dots").innerHTML = slides.map((_, i) => `<button class="${i === slide ? "on" : ""}" data-i="${i}" aria-label="Slide ${i + 1}"></button>`).join("");
@@ -898,7 +1027,7 @@ document.addEventListener("keydown", e => {
 // Loaded data is untrusted, so every value is coerced to a number or a
 // known activity key before it reaches the page.
 // =====================================================================
-function getState() { return { A, W, BW, WHY, TT, TTF, PN, preset }; }
+function getState() { return { A, W, BW, WHY, TT, TTF, PN, preset, build }; }
 function numbersFrom(src, defaults) {
   const out = { ...defaults };
   if (src && typeof src === "object") for (const k of Object.keys(defaults)) {
@@ -919,6 +1048,7 @@ function applyState(s) {
     ? s.TT.map(r => r.map(k => (typeof k === "string" && ACTIVITIES[k]) ? k : "empty"))
     : TT_DEFAULT.map(r => r.slice());
   preset = PRESETS[s.preset] ? s.preset : "";
+  build = BUILDS[s.build] ? s.build : "";
   LEVERS.forEach(l => $("l_" + l.k).value = A[l.k]);
   PN_LEVERS.forEach(l => $("pn_" + l.k).value = PN[l.k]);
   FACTORS.forEach(f => $("w_" + f.k).value = W[f.k]);
@@ -932,7 +1062,7 @@ function applyState(s) {
 // Boot
 // =====================================================================
 function renderAll() {
-  const m = compute();
+  const m = computeAll();
   renderCalc(m);
   renderTimetable(m);
   renderPalette();
