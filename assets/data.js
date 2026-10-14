@@ -36,6 +36,16 @@ const SOURCES = {
   sq_build:     ["ASB Squash: squash court construction (courts share side/front walls; glass back wall with viewing behind)", "https://asbsquash.com/faq/squash-court-construction"],
   bd_design:    ["Sport England / Badminton England: Badminton Design Guidance (run-off between courts and behind baselines)", "https://worldbadminton.com/reference/documents/badminton-design-guide-dec-2011.pdf"],
   pb_rules:     ["USA Pickleball rules, section 2: court 20 × 44 ft; minimum playing area 30 × 60 ft; 34 × 64 ft for new construction", "https://www.playpickleball.com/2025-usa-pickleball-rules-section-2-court-and-equipment/"],
+  floor_gleeds: ["Gleeds cost guide (RIBA Journal, 2024): sprung sports floor £150–225/m² installed", "https://www.ribaj.com/spec/costed-flooring-gleeds-pip-may-june-2024/"],
+  tiles_cost:   ["Modular polypropylene court tiles: ~£25–45/m² (materials)", "https://carefocusdaily.com/outdoor/outdoor-sport-court-tiles-guide"],
+  bd_posts:     ["Athletics Direct: badminton post & net sets for clubs and schools", "https://www.athleticsdirect.co.uk/other-sports/schools-sportshall/badminton-post-and-net-sets"],
+  bd_nets:      ["Harrod Sport 6.1 m badminton nets, £37.50 (club) to £53.50 (BWF-approved)", "https://www.sportsequip.co.uk/manufacturers/harrod-sport/indoor-equipment/badminton/badminton-nets.html"],
+  padel_uk:     ["MyBuilder price guide: indoor padel courts £60–80k each, including building works", "https://www.mybuilder.com/new-build/price-guides/padel-court-installation"],
+  padel_lta:    ["LTA padel court construction guidance note (2025)", "https://www.lta.org.uk/4a230f/siteassets/padel/lta-padel-court-construction-guidance-note-2025.pdf"],
+  sq_cost:      ["ASB Squash: what a squash court costs depends on location, wall system and number of courts (quote needed)", "https://asbsquash.com/faq/squash-court-cost"],
+  ceil_fiba:    ["FIBA venue guide: 7 m clear height above the court", "https://www.venueguide.fiba.basketball/vanue-design"],
+  ceil_padel:   ["FIP Rules of Padel: minimum 6 m height; 8 m suggested for new facilities", "https://www.padelfip.com/wp-content/uploads/2025/12/FIP_Rules-of-Padel.pdf"],
+  ceil_pb:      ["Pickleball court design: 18 ft (5.5 m) recommended minimum clear height", "https://millersports.com/pickleball-court-size/"],
   court_hb:     ["Handball court: 40 × 20 m (larger than a basketball court)", "https://en.wikipedia.org/wiki/Handball"],
   city_density: ["List of EU cities by population within city limits (area, density)", "https://en.wikipedia.org/wiki/List_of_cities_in_the_European_Union_by_population_within_city_limits"],
   eurostat_pop: ["Eurostat: population structure and ageing (share of young people by country)", "https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Population_structure_and_ageing"],
@@ -46,33 +56,115 @@ const SOURCES = {
 // ---------------------------------------------------------------------
 // Sports compared on the "Why basketball" tab.
 // court = official playing area [length, width] in metres.
-// Layout rules (metres, all editable on the site), used to work out how
-// many courts physically fit in a given hall:
-//   side = clearance from the outer wall to the first/last court's side line
-//   gap  = space between two neighbouring courts (a shared wall for squash)
-//   endF = clearance at the front end (front wall for squash)
-//   endB = clearance at the back end (squash: glass back wall + corridor)
-//   mirror = two rows can face each other and share the back space
-// group     = kids one coach can run on one court in a session
-// courtCost = indicative fit-out of ONE court inside a rented building
+// Layout rules (metres, editable on the site) decide how many courts fit:
+//   side     = clearance from the outer wall to the first/last court
+//   gap      = space between neighbouring courts (a shared wall for squash)
+//   endF     = clearance at the front end (front wall for squash)
+//   endB     = clearance at the back end (glass back wall for squash)
+//   corridor = extra access/viewing corridor behind the back (squash only)
+//   mirror   = two rows can face each other and share the corridor
+// group = kids per court in one coaching session; cpc = courts one coach covers
+// Fit-out costs are itemised in SPORT_COSTS below.
 // ---------------------------------------------------------------------
 const SPORTS = [
-  { k: "basketball", name: "Basketball", icon: "🏀", court: [28, 15], side: 2, gap: 2, endF: 2, endB: 2, mirror: false,
-    ceiling: 7, group: 30, range: "20–40", courtCost: 120000, color: "#ff7a1a", src: ["court_bb"],
-    note: "Court 28 × 15 m with 2 m safety run-off all round (FIBA)." },
-  { k: "squash", name: "Squash", icon: "🎾", court: [9.75, 6.4], side: 0.25, gap: 0.25, endF: 0.25, endB: 2.15, mirror: true,
-    ceiling: 5.64, group: 5, range: "4–6", courtCost: 55000, color: "#4da3ff", src: ["court_sq", "sq_build"],
-    note: "Court 9.75 × 6.4 m inside 25 cm walls that neighbouring courts share, plus 2.15 m behind for the glass back wall and an access/viewing corridor. Two rows can share one corridor, but that needs ~22 m of depth." },
-  { k: "badminton", name: "Badminton", icon: "🏸", court: [13.4, 6.1], side: 1.5, gap: 2, endF: 2, endB: 2, mirror: false,
-    ceiling: 7.5, group: 8, range: "6–12", courtCost: 18000, color: "#2ecc71", src: ["court_bd", "bd_design"],
-    note: "Court 13.4 × 6.1 m with 2 m behind each baseline and 2 m between courts (Sport England). At 1.5 m between courts a 4th one squeezes in. 7.5 m ceiling for club play, 9 m for international." },
-  { k: "padel", name: "Padel", icon: "🥎", court: [20, 10], side: 0.5, gap: 0.5, endF: 0.5, endB: 0.5, mirror: false,
-    ceiling: 7, group: 4, range: "4–6", courtCost: 35000, color: "#e0b0ff", src: ["court_pd"],
-    note: "Enclosed 20 × 10 m glass-and-mesh court with 0.5 m access around it. At 20 m long it can't fit across a 19 m hall, so only one fits." },
-  { k: "pickleball", name: "Pickleball", icon: "🏓", court: [13.41, 6.1], side: 1.52, gap: 3.05, endF: 2.44, endB: 2.44, mirror: false,
-    ceiling: 5.5, group: 8, range: "8–12", courtCost: 12000, color: "#ffd166", src: ["court_pb", "pb_rules"],
-    note: "Court 44 × 20 ft (13.41 × 6.1 m), each on the USA Pickleball minimum 30 × 60 ft playing area. At the 34 × 64 ft size recommended for new builds, only 1 fits in 32 × 19 m." },
+  { k: "basketball", name: "Basketball", icon: "🏀", court: [28, 15], side: 2, gap: 2, endF: 2, endB: 2, corridor: 0, mirror: false,
+    ceiling: 7, ceilSrc: "ceil_fiba", group: 30, cpc: 1, range: "20–40", color: "#ff7a1a", src: ["court_bb", "ceil_fiba"],
+    note: "Court 28 × 15 m with 2 m safety run-off all round (FIBA). 7 m clear height." },
+  { k: "squash", name: "Squash", icon: "🎾", court: [9.75, 6.4], side: 0.25, gap: 0.25, endF: 0.25, endB: 0.15, corridor: 2, mirror: true,
+    ceiling: 5.64, ceilSrc: "court_sq", group: 5, cpc: 1, range: "4–6", color: "#4da3ff", src: ["court_sq", "sq_build"],
+    note: "Court 9.75 × 6.4 m inside 25 cm walls shared with the next court, a 15 cm glass back wall, and a 2 m access & viewing corridor behind. Two rows can share one corridor, but that needs ~22 m of depth." },
+  { k: "badminton", name: "Badminton", icon: "🏸", court: [13.4, 6.1], side: 1.5, gap: 2, endF: 2, endB: 2, corridor: 0, mirror: false,
+    ceiling: 7.5, ceilSrc: "bd_design", group: 8, cpc: 2, range: "6–12", color: "#2ecc71", src: ["court_bd", "bd_design"],
+    note: "Court 13.4 × 6.1 m, 2 m behind each baseline, 2 m between courts (Sport England). A 4th fits at 1.5 m spacing. One coach usually runs 2 neighbouring courts. 7.5 m ceiling for club play, 9 m for international." },
+  { k: "padel", name: "Padel", icon: "🥎", court: [20, 10], side: 0.5, gap: 0.5, endF: 0.5, endB: 0.5, corridor: 0, mirror: false,
+    ceiling: 6, ceilSrc: "ceil_padel", group: 4, cpc: 1, range: "4–6", color: "#e0b0ff", src: ["court_pd", "ceil_padel"],
+    note: "Enclosed 20 × 10 m glass-and-mesh court with 0.5 m access around it. At 20 m long it can't fit across a 19 m hall. 6 m minimum height (8 m suggested for new builds)." },
+  { k: "pickleball", name: "Pickleball", icon: "🏓", court: [13.41, 6.1], side: 1.52, gap: 3.05, endF: 2.44, endB: 2.44, corridor: 0, mirror: false,
+    ceiling: 5.5, ceilSrc: "ceil_pb", group: 8, cpc: 2, range: "8–12", color: "#ffd166", src: ["court_pb", "pb_rules", "ceil_pb"],
+    note: "Court 44 × 20 ft (13.41 × 6.1 m), each on the USA Pickleball minimum 30 × 60 ft area. At the 34 × 64 ft size recommended for new builds, only 1 fits in 32 × 19 m. One coach usually runs 2 courts." },
 ];
+
+// ---------------------------------------------------------------------
+// Fit-out cost of ONE court, line by line, at two build standards.
+// [item, basis, value, source key]
+//   basis "fixed" = value is € for the item
+//   basis "court" = value is € per m² × official court area
+//   basis "space" = value is € per m² × space per court (court + clearances)
+// "est" = planner estimate (no public price found); £ converted at €1.17/£.
+// ---------------------------------------------------------------------
+const SPORT_COSTS = {
+  basketball: {
+    lean: [
+      ["Modular sports-floor tiles laid on the existing concrete", "space", 35, "tiles_cost"],
+      ["2 adjustable main hoops + 4 wall-mounted side baskets", "fixed", 12000, "est"],
+      ["LED high-bay lighting", "fixed", 8000, "est"],
+      ["Line marking", "fixed", 1000, "est"],
+    ],
+    premium: [
+      ["Sprung sports floor, installed (≈ £150–225/m²)", "space", 220, "floor_gleeds"],
+      ["2 competition hoop systems + 4 side baskets", "fixed", 20000, "est"],
+      ["Competition-level LED lighting", "fixed", 15000, "est"],
+      ["Wall padding, scoreboard, line marking", "fixed", 7000, "est"],
+    ],
+    refs: ["floor_gleeds", "tiles_cost"],
+  },
+  squash: {
+    lean: [
+      ["Court shell: panel walls + standard glass back wall & door", "fixed", 42000, "est"],
+      ["Sprung maple court floor", "court", 200, "floor_gleeds"],
+      ["Court lighting", "fixed", 3000, "est"],
+    ],
+    premium: [
+      ["Court shell: premium panels + full-glass back wall", "fixed", 58000, "est"],
+      ["Sprung maple court floor", "court", 220, "floor_gleeds"],
+      ["LED lighting + digital scoreboard", "fixed", 6000, "est"],
+    ],
+    refs: ["sq_cost", "floor_gleeds"],
+    note: "Squash court makers don't publish prices; they quote per project (location, wall system, number of courts). The shell figures are estimates, so get a quote.",
+  },
+  badminton: {
+    lean: [
+      ["Modular sports-floor tiles laid on the existing concrete", "space", 35, "tiles_cost"],
+      ["Club post & net set (≈ £95–300)", "fixed", 250, "bd_posts"],
+      ["Court line marking / tape", "fixed", 400, "est"],
+      ["Share of the hall lighting upgrade", "fixed", 2500, "est"],
+    ],
+    premium: [
+      ["Roll-out synthetic badminton mat", "space", 70, "est"],
+      ["Competition posts (pair) + BWF-approved net (≈ £54)", "fixed", 700, "bd_posts"],
+      ["Glare-free LED lighting", "fixed", 5000, "est"],
+    ],
+    refs: ["bd_posts", "bd_nets", "tiles_cost"],
+  },
+  padel: {
+    lean: [
+      ["Standard padel court kit (steel frame, glass, mesh, turf)", "fixed", 25000, "est"],
+      ["Installation", "fixed", 3000, "est"],
+      ["LED lighting", "fixed", 4000, "est"],
+    ],
+    premium: [
+      ["Panoramic padel court (frameless glass)", "fixed", 40000, "est"],
+      ["Installation", "fixed", 4000, "est"],
+      ["LED lighting", "fixed", 6000, "est"],
+    ],
+    refs: ["padel_uk", "padel_lta"],
+    note: "For scale: UK indoor padel courts are quoted at £60–80k each including building works (roofing, insulation). Here the building is already rented, so only the court kit, installation and lights are counted.",
+  },
+  pickleball: {
+    lean: [
+      ["Modular sports-floor tiles laid on the existing concrete", "space", 35, "tiles_cost"],
+      ["Portable net system", "fixed", 400, "est"],
+      ["Line tape / paint", "fixed", 200, "est"],
+      ["Share of the hall lighting upgrade", "fixed", 2000, "est"],
+    ],
+    premium: [
+      ["Cushioned acrylic court surface", "space", 40, "est"],
+      ["Permanent posts & net", "fixed", 900, "est"],
+      ["LED lighting", "fixed", 4000, "est"],
+    ],
+    refs: ["tiles_cost"],
+  },
+};
 
 // ---------------------------------------------------------------------
 // Fitness-zone equipment (CrossFit-style circuit training)
@@ -181,13 +273,13 @@ const STORE_ITEMS = [
 // Two ways to build the hub. Lean = start small and add the rest once the
 // academy is full. Values override the calculator's assumptions.
 const BUILDS = {
-  lean: { courtArea: 540, courtFitout: 35000, gymArea: 0, gymMembers: 0, supportFitout: 20000, convKit: 6000,
+  lean: { courtArea: 540, courtFitout: 38900, gymArea: 0, gymMembers: 0, supportFitout: 20000, convKit: 6000,
           launch: 5000, legal: 4000, depositMonths: 2, asstCoaches: 1, admin: 0, cleaning: 600, brand: 500 },
   full: { courtArea: 608, courtFitout: 120000, gymArea: 200, gymMembers: 80, supportFitout: 40000, convKit: 24500,
           launch: 10000, legal: 8000, depositMonths: 3, asstCoaches: 2, admin: 2000, cleaning: 1200, brand: 800 },
 };
 const LEAN_FITOUT = [
-  ["Modular sports-floor tiles on the existing concrete (~540 m²)", 15000, "court"],
+  ["Modular sports-floor tiles on the existing concrete (~540 m² × €35/m²)", 18900, "court"],
   ["2 adjustable main hoops + 4 wall-mounted side baskets", 12000, "court"],
   ["LED high-bay lighting", 8000, "court"],
   ["Prefab changing room + 2 WCs/showers", 10000, "rooms"],
@@ -551,3 +643,110 @@ const DUPLICATES = [
   "“Spread across Europe” (strategy) = the Europe-wide expansion already in Best cities",
   "“Schools / community centres” appear in both the venue list and the expansion plan: one partner-venue model",
 ];
+
+
+// ---------------------------------------------------------------------
+// GLOSSARY. Click any term on the site with a dotted underline to see
+// what it means and how it is calculated. Keys are matched loosely
+// (case, numbers and ft²/m² don't matter).  [plain explanation, how it's worked out]
+// ---------------------------------------------------------------------
+const GLOSSARY = {
+  // ---- Why basketball ----
+  "Official court size": ["The playing area set by the sport's rules: just the lines, not the space around them."],
+  "Official court": ["Area of the playing lines only, per the sport's rules.", "length × width"],
+  "+ Run-off, walls & clearances": ["Safety space around each court: behind the baselines, at the sides and between neighbouring courts, so players don't hit walls or each other. For squash these are the walls and the glass back wall.", "space per court − official court − corridor"],
+  "+ Access & viewing corridor": ["Squash only: a ~2 m corridor behind the glass back walls to get into the courts and watch. Two facing rows of courts can share one.", "corridor area ÷ courts"],
+  "= Space per court": ["Everything one court really needs: the court plus its share of run-off, walls and corridor, measured from the actual layout.", "area the courts occupy ÷ number of courts"],
+  "Left-over hall space (per court)": ["Floor the courts can't use (the hall isn't an exact multiple of courts). Useful for a waiting area, storage or walkways.", "(hall area − area the courts occupy) ÷ courts"],
+  "= Hall area per court": ["The whole hall divided by the number of courts, including the left-over space.", "hall area ÷ courts"],
+  "Space one court needs": ["Everything one court really needs: the court plus its share of run-off, walls and corridor.", "area the courts occupy ÷ number of courts"],
+  "Minimum ceiling": ["The lowest clear height the sport's rules or guidance allow above the court. Higher ceilings need a taller, usually pricier, building."],
+  "Kids per coach": ["How many kids one coach runs at the same time.", "kids per court × courts one coach covers"],
+  "Courts in 608 m²": ["How many courts physically fit in the floor space you set, using each sport's real spacing rules."],
+  "Kids at once": ["Kids training at the same time in the whole space.", "courts × kids per court"],
+  "Kids at once in 608 m²": ["Kids training at the same time in the whole space.", "courts × kids per court"],
+  "Coaches needed": ["Coaches needed to run every court at once.", "courts ÷ courts per coach, rounded up"],
+  "Coaches needed in 608 m²": ["Coaches needed to run every court at once.", "courts ÷ courts per coach, rounded up"],
+  "Space used": ["Share of the floor the courts (with their run-off, walls and corridors) take up.", "area the courts occupy ÷ hall area"],
+  "Fit-out per court": ["One-time cost to build and equip one court inside an already-rented building: floor, walls or nets, hoops, lighting. Click any amount for the line-by-line breakdown and sources."],
+  "Total fit-out": ["Cost to fit out every court that fits.", "fit-out per court × courts"],
+  "Fit-out per m²": ["How expensive each square metre (or foot) of that sport is to set up.", "fit-out per court ÷ space per court"],
+  "Fit-out per kid place": ["The money needed to create one training place.", "fit-out per court ÷ kids per court"],
+  "Floor space per kid": ["How much floor each kid takes in a session. Lower means the space serves more kids.", "space per court ÷ kids per court"],
+  "Coach cost per kid-hour": ["What coaching one kid for one hour costs.", "coach hourly pay ÷ kids per coach"],
+  "Coach cost per kid-hour (€35/h)": ["What coaching one kid for one hour costs.", "coach hourly pay ÷ kids per coach"],
+  "Build standard": ["Lean = the cheapest setup that works (tiles on concrete, portable kit). Premium = top quality (sprung wooden floors, competition kit). All sports are priced at the same standard so the comparison is fair."],
+  "Courts per coach": ["How many neighbouring courts one coach supervises in a group session, e.g. 1 coach for 2 badminton courts."],
+  // ---- Hub calculator ----
+  "Cash needed": ["The most money the hub needs before it pays for itself: setup before opening plus the losses in the first months while kids sign up. It's the lowest point of the cash-flow curve.", "setup + ramp-up losses"],
+  "Cash needed (peak)": ["The most money the hub needs before it pays for itself: setup before opening plus the losses in the first months while kids sign up.", "setup + ramp-up losses"],
+  "Setup": ["One-time spending before opening: court, rooms, kit, rent deposit, launch, legal."],
+  "Setup before opening": ["One-time spending before opening: court, rooms, kit, rent deposit, launch, legal."],
+  "Ramp-up cost": ["Money lost in the first months while the academy fills up, plus the cost of winning those first members.", "cash needed − setup"],
+  "Grants used": ["Part of the fit-out paid by grants instead of your own money.", "fit-out × % covered by grants"],
+  "Per m²": ["How much money each square metre (or foot) of the hub needs.", "cash needed ÷ total floor area"],
+  "Per kid place": ["Money needed per training place the hub can offer.", "cash needed ÷ maximum kids"],
+  "Kids enrolled": ["Kids signed up to the academy.", "maximum places × occupancy"],
+  "Court utilisation": ["Share of the court's opening hours (06:00–22:00, 7 days) that have an activity booked.", "hours used ÷ 112 hours a week"],
+  "Court used": ["Share of the court's opening hours that have an activity booked.", "hours used ÷ 112 hours a week"],
+  "Fitness members": ["Members of the CrossFit-style fitness zone (only once it's built)."],
+  "Total area": ["Floor area of the warehouse: court + rooms (+ fitness zone if any).", "court + office + changing + lockers + store + entrance"],
+  "Coaches": ["Salaried coaches: head coach + assistants (+ fitness coach)."],
+  "Lifetime value / kid": ["Total fees an average kid pays before leaving.", "monthly fee × average months they stay (1 ÷ monthly leaving rate)"],
+  "Value ÷ acquisition cost": ["How many times over a new kid pays back the cost of winning them. Above 3× is healthy.", "lifetime value ÷ cost to acquire a student"],
+  "Acquisition payback": ["Months of fees needed to recover the cost of winning one kid.", "cost to acquire ÷ monthly fee"],
+  "Revenue / m² / yr": ["How hard the space works: yearly revenue for each square metre (or foot).", "monthly revenue × 12 ÷ total area"],
+  "Cost / member / mo": ["Running cost spread over every member.", "monthly running cost ÷ all members"],
+  "Revenue / mo": ["Money coming in each month once the hub is full."],
+  "Costs / mo": ["Running costs each month: rent, staff, utilities, marketing and so on."],
+  "Profit / mo": ["Revenue minus running costs each month once the hub is full.", "revenue − costs"],
+  "Margin": ["Share of revenue kept as profit.", "profit ÷ revenue"],
+  "Profitable from": ["The first month the hub makes more than it spends."],
+  "Payback": ["Month when everything spent (setup + early losses) has been earned back."],
+  "Break-even occ.": ["Occupancy at which the hub stops losing money. 0% means other income already covers all costs.", "solve: profit = 0"],
+  "Kids": ["Kids enrolled in the academy."],
+  "Occupancy (court places filled)": ["Share of the academy's training places that are filled with paying kids.", "kids enrolled ÷ maximum places"],
+  "Kids monthly fee": ["What a family pays per month for the academy (2 sessions a week)."],
+  "Kids per coach on one court": ["How many kids one basketball coach runs in one session."],
+  "Cost to acquire a student": ["Marketing spent to win one new member: ads, trial sessions, school visits."],
+  "Holiday camp weeks / year": ["Weeks of full-day camps run during school holidays."],
+  "Profit vs occupancy": ["Monthly profit at every occupancy level. The green line is break-even, the white dot is your setting."],
+  "Revenue mix": ["Where the hub's monthly revenue comes from."],
+  "Cost mix": ["Where the hub's monthly running costs go."],
+  "First 24 months: cash flow": ["Month-by-month cash: red bars are months that lose money, green bars make money; the line is the running total. Its lowest point is the cash needed."],
+  "Warehouse layout (to scale)": ["The warehouse drawn to scale: court, office, changing room, lockers, store room and entrance. Change any room size in the calculator."],
+  "Space & investment": ["How the floor area and the investment are split."],
+  // ---- Timetable ----
+  "Prime time used": ["Share of the most valuable hours that are booked: weekdays 16:00–22:00, weekends 09:00–18:00."],
+  "Court revenue / week": ["Revenue from everything on the timetable in one week."],
+  "Net after instructors": ["Weekly court revenue minus freelance instructors and referees.", "revenue − direct costs"],
+  "Visits / week": ["People through the door each week across all activities."],
+  "Added to the calculator": ["Off-peak income (yoga, badminton, hires…) added to the Hub calculator. Activities that already have their own line there aren't counted twice."],
+  "Attendance & booking rate": ["How full sessions are and how often hire slots get booked. The biggest unknown until you run a pilot."],
+  "Revenue per court hour": ["Which use of the court earns the most per hour."],
+  // ---- Partner venues ----
+  "Monthly profit": ["Network revenue minus venue share, coaches, managers, software and marketing."],
+  "Kids reached": ["Different kids training at partner venues.", "weekly places ÷ sessions per kid per week"],
+  "Investment": ["Money needed to launch the network: kit per venue + launch + 2 months of costs."],
+  "Coach hours / month": ["Coach hours needed to staff every session."],
+  "Venue's share of revenue": ["Percentage of session revenue paid to the school or community centre instead of rent."],
+  "Where every €100 of revenue goes": ["How each €100 of partner-venue revenue is split between the venue, coaches, managers, software/marketing and profit."],
+  // ---- Cities & countries ----
+  "Population density": ["People per km² in the city itself. More people close by = more kids within walking distance."],
+  "Share of kids aged 8–18": ["Share of the population in the academy's age group (national youth share)."],
+  "Near schools": ["How many schools sit close to typical family neighbourhoods."],
+  "Residential / family areas": ["How much of the city is family housing rather than offices or tourism."],
+  "Basketball interest": ["How popular basketball already is (clubs, pro teams, culture)."],
+  "Supply gap (few academies)": ["Demand that isn't met yet: few academies, waiting lists."],
+  "Ability to pay": ["Household income, which decides what monthly fee families can afford."],
+  "Low operating cost": ["How cheap rent and wages are (10 = cheapest)."],
+  "Ranking": ["Cities sorted by weighted score. Tier 1 capitals are always listed last as too expensive for now."],
+  "Ease ranking": ["Countries sorted by how easy it is to set up and run the business."],
+  "Speed to register": ["How quickly a company can be registered."],
+  "Setup cost & minimum capital": ["Registration fees, notary costs and the minimum share capital needed."],
+  "Corporate tax": ["Tax on company profits."],
+  "Labour cost (lower = better)": ["Average hourly cost of an employee (Eurostat 2025). Lower is better for us."],
+  "Rules for paid youth sport": ["How hard local rules make it to employ paid coaches for children (licences, vetting)."],
+  "Working in English": ["How easy it is to run the business in English."],
+  "Where to launch first": ["Each country plotted by how easy it is to start (→) and demand in its best tier 2/3 city (↑). Top right = launch first."],
+};

@@ -101,6 +101,7 @@ function toImperial(t) {
 }
 const unitOrig = new WeakMap();
 function convNode(node) {
+  if (node.parentElement && node.parentElement.closest("[data-no-unit]")) return;
   const cur = node.nodeValue;
   let o = unitOrig.get(node);
   if (o === undefined || (cur !== o && cur !== toImperial(o))) { o = cur; unitOrig.set(node, o); }
@@ -453,42 +454,81 @@ function cashChartSvg(R) {
     <div class="legend"><span><i style="background:#22c55e"></i>Monthly cash in</span><span><i style="background:#ef4444"></i>Monthly cash out</span>
     <span><i style="background:#ffb547"></i>Cumulative cash (starts at minus the setup cost)</span><span>Payback: <b>${R.payMonth ? "month " + R.payMonth : "not in sight"}</b></span></div>`;
 }
-// To-scale warehouse plan: court on the left, fitness zone and rooms in strips beside it.
-function floorPlanSvg(P) {
-  const k = 10, pad = 1;
+// To-scale warehouse plan: court on the left, fitness zone and rooms in strips
+// beside it. bp = blueprint style (used on the Mission tab) with a grid,
+// dimension lines, doors and the entrance.
+function floorPlanSvg(P, bp = false) {
+  const k = 10, pad = bp ? 3.2 : 1;
   const cw = Math.sqrt(P.courtArea * 32 / 19), ch = P.courtArea / cw;
   const court = P.courtArea >= 600 ? [28, 15] : [Math.max(10, Math.min(26, cw - 2)), Math.max(6, Math.min(14, ch - 2))];
   const rooms = ROOMS.map(([key, label, icon, , color]) => ({ label, icon, color, a: P[key] || 0 })).filter(r => r.a > 0);
   const rTotal = rooms.reduce((s, r) => s + r.a, 0), rw = rTotal / ch;
   const gw = P.gymArea ? P.gymArea / ch : 0;
   const Wm = cw + gw + rw, Hm = ch;
-  let g = `<rect x="${pad * k}" y="${pad * k}" width="${Wm * k}" height="${Hm * k}" fill="#0d1015" stroke="#5c6474" stroke-width="3"/>`;
+  const VW = (Wm + pad * 2) * k, VH = (Hm + pad * 2) * k + (bp ? 0 : 22);
+  const ink = bp ? "#e6f0ff" : "#ff9a3c", wall = bp ? "#e6f0ff" : "#5c6474", bg = bp ? "#0b2545" : "#0d1015";
+  const X0 = pad * k, Y0 = pad * k;
+  let g = bp ? `<rect x="0" y="0" width="${VW}" height="${VH}" fill="${bg}"/>` : "";
+  if (bp) for (let i = 0; i <= Math.ceil(Wm); i++) g += `<line x1="${X0 + i * k}" x2="${X0 + i * k}" y1="${Y0}" y2="${Y0 + Hm * k}" stroke="#fff" stroke-opacity="${i % 5 ? .04 : .1}"/>`;
+  if (bp) for (let j = 0; j <= Math.ceil(Hm); j++) g += `<line x1="${X0}" x2="${X0 + Wm * k}" y1="${Y0 + j * k}" y2="${Y0 + j * k}" stroke="#fff" stroke-opacity="${j % 5 ? .04 : .1}"/>`;
+  g += `<rect x="${X0}" y="${Y0}" width="${Wm * k}" height="${Hm * k}" fill="${bp ? "none" : "#0d1015"}" stroke="${wall}" stroke-width="${bp ? 4 : 3}"/>`;
+  // court
   const ox = pad + (cw - court[0]) / 2, oy = pad + (ch - court[1]) / 2, X = v => (ox + v) * k, Y = v => (oy + v) * k;
   const mid = court[1] / 2, arc = Math.min(6.6, mid - 0.4);
-  g += `<rect x="${pad * k}" y="${pad * k}" width="${cw * k}" height="${ch * k}" fill="#ff7a1a" fill-opacity=".08"/>
-    <rect x="${X(0)}" y="${Y(0)}" width="${court[0] * k}" height="${court[1] * k}" fill="#c2733a" fill-opacity=".28" stroke="#ff9a3c" stroke-width="2"/>
-    <line x1="${X(court[0] / 2)}" x2="${X(court[0] / 2)}" y1="${Y(0)}" y2="${Y(court[1])}" stroke="#ff9a3c" stroke-width="1.5"/>
-    <circle cx="${X(court[0] / 2)}" cy="${Y(mid)}" r="${1.8 * k}" fill="none" stroke="#ff9a3c" stroke-width="1.5"/>`;
+  g += `<rect x="${X0}" y="${Y0}" width="${cw * k}" height="${ch * k}" fill="${bp ? "#fff" : "#ff7a1a"}" fill-opacity="${bp ? .03 : .08}"/>
+    <rect x="${X(0)}" y="${Y(0)}" width="${court[0] * k}" height="${court[1] * k}" fill="${bp ? "none" : "#c2733a"}" fill-opacity=".28" stroke="${ink}" stroke-width="2"/>
+    <line x1="${X(court[0] / 2)}" x2="${X(court[0] / 2)}" y1="${Y(0)}" y2="${Y(court[1])}" stroke="${ink}" stroke-width="1.5"/>
+    <circle cx="${X(court[0] / 2)}" cy="${Y(mid)}" r="${1.8 * k}" fill="none" stroke="${ink}" stroke-width="1.5"/>`;
   [0, 1].forEach(side => {
     const edge = side ? court[0] : 0, bx = side ? court[0] - 1.575 : 1.575, kx = side ? court[0] - 5.8 : 0;
-    g += `<rect x="${X(kx)}" y="${Y(mid - 2.45)}" width="${5.8 * k}" height="${4.9 * k}" fill="none" stroke="#ff9a3c" stroke-width="1.5"/>
-      <path d="M${X(edge)},${Y(mid - arc)} L${X(bx)},${Y(mid - arc)} A${6.75 * k},${6.75 * k} 0 0 ${side ? 0 : 1} ${X(bx)},${Y(mid + arc)} L${X(edge)},${Y(mid + arc)}" fill="none" stroke="#ff9a3c" stroke-width="1.5"/>
+    g += `<rect x="${X(kx)}" y="${Y(mid - 2.45)}" width="${5.8 * k}" height="${4.9 * k}" fill="none" stroke="${ink}" stroke-width="1.5"/>
+      <path d="M${X(edge)},${Y(mid - arc)} L${X(bx)},${Y(mid - arc)} A${6.75 * k},${6.75 * k} 0 0 ${side ? 0 : 1} ${X(bx)},${Y(mid + arc)} L${X(edge)},${Y(mid + arc)}" fill="none" stroke="${ink}" stroke-width="1.5"/>
       <circle cx="${X(bx)}" cy="${Y(mid)}" r="${0.45 * k}" fill="none" stroke="#fff" stroke-width="2"/>`;
   });
-  g += `<text x="${(pad + cw / 2) * k}" y="${(pad + ch) * k - 10}" fill="#ffb547" font-size="15" font-weight="800" text-anchor="middle">Court ${court[0].toFixed(0)} × ${court[1].toFixed(0)} m</text>`;
-  if (gw) g += `<rect x="${(pad + cw) * k}" y="${pad * k}" width="${gw * k}" height="${ch * k}" fill="#3b82f6" fill-opacity=".22" stroke="#3b82f6"/>
-    <text x="${(pad + cw + gw / 2) * k}" y="${(pad + ch / 2) * k}" fill="#93c5fd" font-size="14" font-weight="800" text-anchor="middle" transform="rotate(-90 ${(pad + cw + gw / 2) * k} ${(pad + ch / 2) * k})">Fitness ${fmtInt(P.gymArea)} m²</text>`;
+  g += `<text x="${(pad + cw / 2) * k}" y="${Y(mid) - 22}" fill="${bp ? "#fff" : "#ffb547"}" font-size="15" font-weight="800" text-anchor="middle">🏀 Basketball court</text>
+    <text x="${(pad + cw / 2) * k}" y="${Y(mid) + 34}" fill="${bp ? "#bcd3f5" : "#ffb547"}" font-size="12.5" text-anchor="middle">${fmtDims(court[0], court[1])} · ${fmtArea(P.courtArea)} with run-off</text>`;
+  // fitness strip
+  if (gw) g += `<rect x="${(pad + cw) * k}" y="${Y0}" width="${gw * k}" height="${ch * k}" fill="#3b82f6" fill-opacity="${bp ? .12 : .22}" stroke="${bp ? wall : "#3b82f6"}"/>
+    <text x="${(pad + cw + gw / 2) * k}" y="${(pad + ch / 2) * k}" fill="${bp ? "#fff" : "#93c5fd"}" font-size="14" font-weight="800" text-anchor="middle" transform="rotate(-90 ${(pad + cw + gw / 2) * k} ${(pad + ch / 2) * k})">🏋️ Fitness ${fmtArea(P.gymArea)}</text>`;
+  // rooms strip, with a door onto the court side of each room
   let yy = pad;
   const rx = pad + cw + gw;
-  rooms.forEach(r => {
-    const h = r.a / rw;
-    g += `<rect x="${rx * k}" y="${yy * k}" width="${rw * k}" height="${h * k}" fill="${r.color}" fill-opacity=".22" stroke="${r.color}"/>`;
-    if (h * k > 18) g += `<text x="${(rx + rw / 2) * k}" y="${(yy + h / 2) * k + 4}" fill="#eef0f4" font-size="${h * k > 36 ? 12 : 10}" font-weight="700" text-anchor="middle">${r.label.split(" ")[0]} ${fmtInt(r.a)} m²</text>`;
+  rooms.forEach((r, i) => {
+    const h = r.a / rw, ry = yy * k, rh = h * k;
+    g += `<rect x="${rx * k}" y="${ry}" width="${rw * k}" height="${rh}" fill="${bp ? "#fff" : r.color}" fill-opacity="${bp ? .05 : .22}" stroke="${bp ? wall : r.color}" stroke-width="${bp ? 1.5 : 1}"/>`;
+    if (bp && rh > 14) {
+      const dy = ry + Math.min(rh / 2, 12), d = Math.min(9, rh / 2 - 2);
+      g += `<line x1="${rx * k}" x2="${rx * k}" y1="${dy - d}" y2="${dy + d}" stroke="${bg}" stroke-width="4"/>
+        <path d="M${rx * k},${dy - d} A${2 * d},${2 * d} 0 0 1 ${rx * k + 2 * d},${dy + d}" fill="none" stroke="#9fc2ef" stroke-width="1"/>`;
+    }
+    if (rh > 16) {
+      const big = rh > 34;
+      g += `<text x="${(rx + rw / 2) * k}" y="${ry + rh / 2 + (big ? -2 : 4)}" fill="#fff" font-size="${big ? 12 : 10}" font-weight="700" text-anchor="middle">${r.icon} ${r.label.split(" ")[0]}</text>`;
+      if (big) g += `<text x="${(rx + rw / 2) * k}" y="${ry + rh / 2 + 13}" fill="${bp ? "#bcd3f5" : "#cfd3da"}" font-size="10.5" text-anchor="middle">${fmtArea(r.a)}</text>`;
+    }
+    if (bp && /Entrance/.test(r.label)) g += `<path d="M${(rx + rw) * k + 30},${ry + rh / 2} L${(rx + rw) * k + 6},${ry + rh / 2}" stroke="#ffb547" stroke-width="2.5" marker-end="url(#bpArr)"/>
+      <text x="${(rx + rw) * k + 8}" y="${ry + rh / 2 - 8}" fill="#ffb547" font-size="11" font-weight="800">ENTRANCE</text>`;
     yy += h;
   });
-  const VW = (Wm + pad * 2) * k, VH = (Hm + pad * 2) * k + 22;
-  g += `<text x="${VW / 2}" y="${VH - 4}" fill="#8b93a3" font-size="13" text-anchor="middle">Warehouse ≈ ${Wm.toFixed(0)} × ${Hm.toFixed(0)} m · 7 m+ clear height</text>`;
-  return `<svg viewBox="0 0 ${VW.toFixed(0)} ${VH.toFixed(0)}" role="img" aria-label="Warehouse floor plan">${g}</svg>`;
+  if (bp) {
+    // dimension lines: overall width (top) and depth (left)
+    const dimY = Y0 - 1.6 * k, dimX = X0 - 1.6 * k;
+    g += `<defs><marker id="bpArr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#ffb547"/></marker></defs>
+      <line x1="${X0}" x2="${X0 + Wm * k}" y1="${dimY}" y2="${dimY}" stroke="#9fc2ef"/>
+      <line x1="${X0}" x2="${X0}" y1="${dimY - 5}" y2="${dimY + 5}" stroke="#9fc2ef"/><line x1="${X0 + Wm * k}" x2="${X0 + Wm * k}" y1="${dimY - 5}" y2="${dimY + 5}" stroke="#9fc2ef"/>
+      <line x1="${X0 + cw * k}" x2="${X0 + cw * k}" y1="${dimY - 4}" y2="${dimY + 4}" stroke="#9fc2ef"/>
+      <text x="${X0 + cw * k / 2}" y="${dimY - 6}" fill="#bcd3f5" font-size="12" text-anchor="middle">${fmtLen(cw)}</text>
+      <text x="${X0 + (cw + (gw + rw) / 2) * k}" y="${dimY - 6}" fill="#bcd3f5" font-size="12" text-anchor="middle">${fmtLen(gw + rw)}</text>
+      <line x1="${dimX}" x2="${dimX}" y1="${Y0}" y2="${Y0 + Hm * k}" stroke="#9fc2ef"/>
+      <line x1="${dimX - 5}" x2="${dimX + 5}" y1="${Y0}" y2="${Y0}" stroke="#9fc2ef"/><line x1="${dimX - 5}" x2="${dimX + 5}" y1="${Y0 + Hm * k}" y2="${Y0 + Hm * k}" stroke="#9fc2ef"/>
+      <text x="${dimX - 6}" y="${Y0 + Hm * k / 2}" fill="#bcd3f5" font-size="12" text-anchor="middle" transform="rotate(-90 ${dimX - 6} ${Y0 + Hm * k / 2})">${fmtLen(Hm)}</text>
+      <text x="${X0}" y="${Y0 + Hm * k + 22}" fill="#bcd3f5" font-size="12">Warehouse ${fmtDims(Wm, Hm)} · ${fmtArea(Wm * Hm)} · clear height ${fmtLen(7)}+</text>
+      <line x1="${X0 + Wm * k - 5 * k}" x2="${X0 + Wm * k}" y1="${Y0 + Hm * k + 18}" y2="${Y0 + Hm * k + 18}" stroke="#bcd3f5" stroke-width="3"/>
+      <text x="${X0 + Wm * k - 2.5 * k}" y="${Y0 + Hm * k + 30}" fill="#bcd3f5" font-size="10" text-anchor="middle">${fmtLen(5)}</text>`;
+  } else {
+    g += `<text x="${VW / 2}" y="${VH - 4}" fill="#8b93a3" font-size="13" text-anchor="middle">Warehouse ≈ ${fmtDims(Wm, Hm)} · ${fmtLen(7)}+ clear height</text>`;
+  }
+  return `<svg viewBox="0 0 ${VW.toFixed(0)} ${VH.toFixed(0)}" role="img" aria-label="Warehouse floor plan" data-no-unit>${g}</svg>`;
 }
 
 function renderCalc(m) {
@@ -637,21 +677,32 @@ function renderTimetable(m) {
 // =====================================================================
 // WHY BASKETBALL
 // =====================================================================
-let WHY = { area: 608, coach: 35, ...(saved.WHY || {}) };
+let WHY = { area: 608, coach: 35, std: "lean", ...(saved.WHY || {}) };
+if (WHY.std !== "premium") WHY.std = "lean";
 $("whyArea").value = WHY.area; $("whyCoach").value = WHY.coach;
 $("whyArea").addEventListener("input", e => { WHY.area = Number(e.target.value); save(); renderWhy(); renderDeck(); });
 $("whyCoach").addEventListener("input", e => { WHY.coach = Number(e.target.value); save(); renderWhy(); renderDeck(); });
-$("whySrc").innerHTML = srcDetails([...SPORTS.flatMap(s => s.src), "est"], "<li>Fit-out costs are rough estimates for one indoor court inside a rented building, not including the building itself</li>");
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-std]");
+  if (!b) return;
+  WHY.std = b.dataset.std === "premium" ? "premium" : "lean";
+  save(); renderWhy(); renderDeck();
+});
+
+// Exact unit formatting (convert from the exact metric value, round once).
+const fmtArea = m2 => UNIT === "ft" ? fmtInt(m2 * FT2) + " ft²" : (m2 < 100 ? m2.toFixed(1).replace(/\.0$/, "") : fmtInt(m2)) + " m²";
+const lenNum = m => UNIT === "ft" ? (m * FT).toFixed(1).replace(/\.0$/, "") : String(+m.toFixed(2));
+const fmtLen = m => lenNum(m) + (UNIT === "ft" ? " ft" : " m");
+const fmtDims = (a, b) => `${lenNum(a)} × ${lenNum(b)} ${UNIT === "ft" ? "ft" : "m"}`;
+const perUnit = () => UNIT === "ft" ? "ft²" : "m²";
 
 function spaceDims(area) { const w = Math.sqrt(area * 32 / 19); return [w, area / w]; }
-// Floor one court really needs (court + its share of clearances), m × m.
-const sportFootprint = s => [s.court[1] + Math.max(s.gap, 2 * s.side), s.court[0] + s.endF + s.endB];
 // How many courts physically fit, using each sport's layout rules. Tries
 // courts side by side along the long wall and along the short wall.
 function fitCourts(s, area) {
   const [W, H] = spaceDims(area), [cl, cw] = s.court;
   const across = len => Math.max(0, Math.floor((len - 2 * s.side + s.gap) / (cw + s.gap)));
-  const rowDepth = cl + s.endF + s.endB, pairDepth = 2 * (cl + s.endF) + s.endB;
+  const rowDepth = cl + s.endF + s.endB + s.corridor, pairDepth = 2 * (cl + s.endF + s.endB) + s.corridor;
   const rowsIn = len => {
     if (!s.mirror) return Math.max(0, Math.floor(len / rowDepth));
     const pairs = Math.floor(len / pairDepth);
@@ -662,95 +713,178 @@ function fitCourts(s, area) {
   const best = a.n * a.rows >= b.n * b.rows ? a : b;
   return { ...best, count: best.n * best.rows, W, H };
 }
-// Court rectangles (and squash corridors) in metres, centred in the hall.
+// Court rectangles and squash corridors in metres, centred in the hall,
+// plus the block they occupy (used for every space figure).
 function courtLayout(s, fit) {
   const [cl, cw] = s.court, { n, rows, alongX, W, H } = fit;
-  const usedAcross = n ? 2 * s.side + n * cw + (n - 1) * s.gap : 0;
+  const across = n ? 2 * s.side + n * cw + (n - 1) * s.gap : 0;
   const ys = [], corridors = [];
   let used = 0;
   for (let r = 0; r < rows; r++) {
     if (s.mirror && r % 2 === 1) {                        // mirrored partner shares the corridor
-      ys.push({ y: used + s.endB, flip: true });
+      ys.push(used + s.endB);
       used += s.endB + cl + s.endF;
     } else {
-      ys.push({ y: used + s.endF, flip: false });
-      const lastSingle = !s.mirror || r === rows - 1;
-      corridors.push({ y: used + s.endF + cl, d: s.endB });
-      used += s.endF + cl + (lastSingle ? s.endB : 0);
+      ys.push(used + s.endF);
+      if (s.corridor) corridors.push(used + s.endF + cl + s.endB);
+      used += s.endF + cl + s.endB + (s.corridor || 0);
     }
   }
   const spanX = alongX ? W : H, spanY = alongX ? H : W;
-  const ox = (spanX - usedAcross) / 2, oy = (spanY - used) / 2;
+  const ox = (spanX - across) / 2, oy = (spanY - used) / 2;
   const courts = [];
-  for (let i = 0; i < n; i++) for (const row of ys)
-    courts.push({ x: ox + s.side + i * (cw + s.gap), y: oy + row.y, w: cw, l: cl });
-  const runs = s.mirror ? corridors.map(c => ({ x: ox, y: oy + c.y, w: usedAcross, l: c.d })) : [];
+  for (let i = 0; i < n; i++) for (const y of ys) courts.push({ x: ox + s.side + i * (cw + s.gap), y: oy + y, w: cw, l: cl });
+  const runs = corridors.map(y => ({ x: ox, y: oy + y, w: across, l: s.corridor }));
   const swap = r => alongX ? { x: r.x, y: r.y, w: r.w, h: r.l } : { x: r.y, y: r.x, w: r.l, h: r.w };
-  return { courts: courts.map(swap), corridors: runs.map(swap) };
+  return { courts: courts.map(swap), corridors: runs.map(swap), blockArea: across * used, corridorArea: runs.length * across * s.corridor };
+}
+// Fit-out of one court at the chosen build standard, line by line.
+function sportCost(s, spacePerCourt, std = WHY.std) {
+  const lines = (SPORT_COSTS[s.k] || {})[std] || [];
+  const courtArea = s.court[0] * s.court[1];
+  const rows = lines.map(([item, basis, value, src], i) => {
+    const qty = basis === "court" ? courtArea : basis === "space" ? spacePerCourt : 1;
+    return { i, item, basis, value, src, qty, amount: qty * value };
+  });
+  return { rows, total: rows.reduce((t, r) => t + r.amount, 0) };
 }
 function sportMetrics(s, area, coachRate) {
-  const fit = fitCourts(s, area), fp = sportFootprint(s), fpArea = fp[0] * fp[1];
-  return { s, fit, fp, fpArea, students: fit.count * s.group, investment: fit.count * s.courtCost, coaches: fit.count,
-    perCoach: s.group, coachPerKidHr: coachRate / s.group, invPerPlace: s.courtCost / s.group,
-    m2PerKid: fpArea / s.group, invPerM2: s.courtCost / fpArea, usedPct: fit.count * fpArea / area };
+  const fit = fitCourts(s, area), L = courtLayout(s, fit), n = fit.count;
+  const courtArea = s.court[0] * s.court[1];
+  // Standalone court (when none fit) uses its own clearances on every side.
+  const alone = (s.court[1] + 2 * s.side) * (s.court[0] + s.endF + s.endB + s.corridor);
+  const space = n ? L.blockArea / n : alone;
+  const corridor = n ? L.corridorArea / n : s.corridor * (s.court[1] + 2 * s.side);
+  const cost = sportCost(s, space);
+  const perCoach = s.group * Math.max(1, s.cpc);
+  return { s, fit, L, courtArea, space, corridor, clearance: space - courtArea - corridor,
+    leftover: n ? (area - L.blockArea) / n : 0, hallPerCourt: n ? area / n : 0,
+    cost, courtCost: cost.total, students: n * s.group, investment: n * cost.total, coaches: Math.ceil(n / Math.max(1, s.cpc)),
+    perCoach, coachPerKidHr: coachRate / perCoach, invPerPlace: cost.total / s.group,
+    m2PerKid: space / s.group, invPerM2: cost.total / space, usedPct: n ? L.blockArea / area : 0 };
 }
 const allSportMetrics = () => SPORTS.map(s => sportMetrics(s, WHY.area, WHY.coach));
+
 function sportSvg(m) {
-  const { fit, s } = m, pad = 0.6, k = 10;
+  const { fit, s, L } = m, pad = 0.6, k = 10;
   const VW = (fit.W + pad * 2) * k, VH = (fit.H + pad * 2) * k;
-  const L = layoutCache(m);
   let g = `<rect x="${pad * k}" y="${pad * k}" width="${fit.W * k}" height="${fit.H * k}" fill="none" stroke="#3a404c" stroke-width="3" stroke-dasharray="10 6"/>`;
-  L.corridors.forEach(c => g += `<rect x="${(pad + c.x) * k}" y="${(pad + c.y) * k}" width="${c.w * k}" height="${c.h * k}" fill="#94a3b8" fill-opacity=".10" stroke="#94a3b8" stroke-opacity=".5" stroke-dasharray="5 4"/>` +
+  L.corridors.forEach(c => g += `<rect x="${(pad + c.x) * k}" y="${(pad + c.y) * k}" width="${c.w * k}" height="${c.h * k}" fill="#94a3b8" fill-opacity=".12" stroke="#94a3b8" stroke-opacity=".5" stroke-dasharray="5 4"/>` +
     (Math.max(c.w, c.h) * k > 90 ? `<text x="${(pad + c.x + c.w / 2) * k}" y="${(pad + c.y + c.h / 2) * k + 5}" fill="#94a3b8" font-size="13" text-anchor="middle"${c.h > c.w ? ` transform="rotate(-90 ${(pad + c.x + c.w / 2) * k} ${(pad + c.y + c.h / 2) * k})"` : ""}>access & viewing corridor</text>` : ""));
   L.courts.forEach(c => {
-    const x = (pad + c.x) * k, y = (pad + c.y) * k, w = c.w * k, h = c.h * k;
-    // clearance zone around the court (half the gap to neighbours)
-    const gx = (s.gap / 2) * k;
+    const x = (pad + c.x) * k, y = (pad + c.y) * k, w = c.w * k, h = c.h * k, gx = (s.gap / 2) * k;
     g += `<rect x="${x - gx}" y="${y - gx}" width="${w + 2 * gx}" height="${h + 2 * gx}" fill="${s.color}" fill-opacity=".06"/>`;
     g += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${s.color}" fill-opacity=".18" stroke="${s.k === "squash" ? "#cbd5e1" : s.color}" stroke-width="${s.k === "squash" ? 4 : 2.5}"/>`;
     const n = s.group, cols = Math.max(1, Math.round(Math.sqrt(n * c.w / c.h))), rows = Math.ceil(n / cols);
     const dx = c.w / cols, dy = c.h / rows, rad = Math.min(dx, dy) * 0.3 * k;
     for (let i = 0; i < n; i++) g += `<circle cx="${x + dx * (i % cols + .5) * k}" cy="${y + dy * (Math.floor(i / cols) + .5) * k}" r="${rad}" fill="${s.color}"/>`;
-    const cs = Math.max(rad * 2, 7);
-    g += `<rect x="${x + w / 2 - cs / 2}" y="${y - cs / 2}" width="${cs}" height="${cs}" rx="2" fill="#fff"/>`;
+  });
+  // coaches: one white square per coach, on the first court of each group
+  L.courts.forEach((c, i) => {
+    if (i % Math.max(1, s.cpc)) return;
+    const cs = 8, x = (pad + c.x + c.w / 2) * k - cs / 2, y = (pad + c.y) * k - cs / 2;
+    g += `<rect x="${x}" y="${y}" width="${cs}" height="${cs}" rx="2" fill="#fff"/>`;
   });
   if (!L.courts.length) g += `<text x="${VW / 2}" y="${VH / 2}" fill="#ef4444" font-size="16" font-weight="800" text-anchor="middle">No court fits this space</text>`;
   return `<svg viewBox="0 0 ${VW.toFixed(0)} ${VH.toFixed(0)}" role="img" aria-label="${s.name}: ${fit.count} courts">${g}</svg>`;
 }
-const layoutCache = m => courtLayout(m.s, m.fit);
+
+function renderSportEdit() {
+  $("sportEdit").innerHTML = `<div class="table-scroll"><table><thead><tr><th>Sport</th><th>Kids per court</th><th>Courts per coach</th><th>Wall → first court (m)</th><th>Between courts (m)</th><th>Front clearance (m)</th><th>Back clearance (m)</th><th>Corridor (m)</th><th>Fit-out per court</th><th>Courts that fit</th></tr></thead><tbody>` +
+    SPORTS.map(sp => { const mm = sportMetrics(sp, WHY.area, WHY.coach); return `<tr><td>${sp.icon} ${sp.name}</td>${["group", "cpc", "side", "gap", "endF", "endB", "corridor"].map(f =>
+      `<td>${cellIn(`sport.${sp.k}.${f}`, sp[f], `${sp.name}: ${f}`)}</td>`).join("")}<td>${costBtn(mm, eur(mm.courtCost))}</td><td><b>${mm.fit.count}</b></td></tr>`; }).join("") +
+    `</tbody></table></div><p class="help">Distances in metres. Kids per court × courts per coach = kids per coach. Click a fit-out amount for its breakdown and sources.</p>` + resetBtn("sport.");
+}
+const costBtn = (m, value) => `<button class="cost-link" data-cost="${m.s.k}" title="See the breakdown and sources">${value}</button>`;
 function renderWhy() {
-  $("whyAreaV").textContent = fmtInt(WHY.area) + " m²";
+  $("whyAreaV").textContent = fmtArea(WHY.area);
   $("whyCoachV").textContent = "€" + WHY.coach;
-  const ms = allSportMetrics();
+  document.querySelectorAll("[data-std]").forEach(b => b.classList.toggle("on", b.dataset.std === WHY.std));
+  const ms = allSportMetrics(), U = perUnit();
   $("sportPanels").innerHTML = ms.map(m => `<div class="sport${m.s.k === "basketball" ? " win" : ""}">
     <div class="hd"><span>${m.s.icon} ${m.s.name}</span><span class="tag${m.s.k === "basketball" ? " acc" : ""}">${plural(m.fit.count, "court", "courts")}</span></div>
     ${sportSvg(m)}
-    <div class="trio"><div><b>${m.students}</b><span>kids</span></div><div><b>${m.coaches}</b><span>${m.coaches === 1 ? "coach" : "coaches"}</span></div><div><b>${short(m.investment)}</b><span>fit-out</span></div></div>
+    <div class="trio"><div><b>${m.students}</b><span>kids</span></div><div><b>${m.coaches}</b><span>${m.coaches === 1 ? "coach" : "coaches"}</span></div><div><b>${costBtn(m, short(m.investment))}</b><span>fit-out</span></div></div>
     <p class="help sport-note">${m.s.note}</p>
   </div>`).join("");
   const chart = (title, key, fmt, lowerBetter) => {
     const max = Math.max(...ms.map(m => m[key])) || 1;
     const best = lowerBetter ? Math.min(...ms.map(m => m[key])) : Math.max(...ms.map(m => m[key]));
-    return `<div class="card pad-s"><h3>${title} <span class="muted small" style="font-weight:500">${lowerBetter ? "· lower is better" : "· higher is better"}</span></h3>
+    return `<div class="card pad-s"><h3><span class="chart-t">${title}</span> <span class="muted small" style="font-weight:500">${lowerBetter ? "· lower is better" : "· higher is better"}</span></h3>
       ${ms.map(m => `<div class="hbar-row"><span>${m.s.icon} ${m.s.name}</span><div class="hbar"><span style="width:${Math.max(3, m[key] / max * 100)}%;background:${m.s.color};opacity:${m[key] === best ? 1 : .35}"></span></div><span class="v">${fmt(m[key])}</span></div>`).join("")}</div>`;
   };
   $("sportCharts").innerHTML = [
     chart("Kids per coach", "perCoach", v => v, false),
     chart(`Coach cost per kid-hour (€${WHY.coach}/h)`, "coachPerKidHr", v => "€" + v.toFixed(2), true),
-    chart(`Kids at once in ${fmtInt(WHY.area)} m²`, "students", v => fmtInt(v), false),
-    chart(`Coaches needed in ${fmtInt(WHY.area)} m²`, "coaches", v => v, true),
-    chart("Floor space per kid", "m2PerKid", v => v.toFixed(1) + " m²", true),
+    chart(`Kids at once in ${fmtArea(WHY.area)}`, "students", v => fmtInt(v), false),
+    chart(`Coaches needed in ${fmtArea(WHY.area)}`, "coaches", v => v, true),
+    chart("Floor space per kid", "m2PerKid", v => fmtArea(v), true),
     chart("Fit-out per kid place", "invPerPlace", v => eur(v), true),
   ].join("");
-  const rows = [
-    ["Official court size", m => m.s.court.join(" × ") + " m"], ["Space one court needs", m => `${fmtInt(m.fpArea)} m²`],
-    ["Minimum ceiling", m => m.s.ceiling + " m"], ["Kids per coach", m => m.s.range], [`Courts in ${fmtInt(WHY.area)} m²`, m => m.fit.count],
-    ["Kids at once", m => fmtInt(m.students)], ["Coaches needed", m => m.coaches], ["Fit-out per court", m => eur(m.s.courtCost)],
-    ["Total fit-out", m => eur(m.investment)], ["Fit-out per m²", m => eur(perArea(m.invPerM2))], ["Fit-out per kid place", m => eur(m.invPerPlace)],
-    ["Floor space per kid", m => m.m2PerKid.toFixed(1) + " m²"], ["Coach cost per kid-hour", m => "€" + m.coachPerKidHr.toFixed(2)], ["Space used", m => pct(m.usedPct)],
-  ];
+  const sec = t => `<tr class="sec-row"><td colspan="${ms.length + 1}">${t}</td></tr>`;
+  const row = (label, f) => `<tr><td>${label}</td>${ms.map(m => `<td>${f(m)}</td>`).join("")}</tr>`;
   $("sportTable").innerHTML = `<thead><tr><th>Metric</th>${ms.map(m => `<th>${m.s.icon} ${m.s.name}</th>`).join("")}</tr></thead><tbody>` +
-    rows.map(([l, f]) => `<tr><td>${l}</td>${ms.map(m => `<td>${f(m)}</td>`).join("")}</tr>`).join("") + "</tbody>";
+    sec("Size") +
+    row("Official court size", m => fmtDims(m.s.court[0], m.s.court[1])) +
+    row("Minimum ceiling", m => fmtLen(m.s.ceiling)) +
+    sec("Space per court, line by line") +
+    row("Official court", m => fmtArea(m.courtArea)) +
+    row("+ Run-off, walls & clearances", m => fmtArea(m.clearance)) +
+    row("+ Access & viewing corridor", m => m.corridor ? fmtArea(m.corridor) : "–") +
+    row("= Space per court", m => `<b>${fmtArea(m.space)}</b>`) +
+    row("Left-over hall space (per court)", m => m.fit.count ? fmtArea(m.leftover) : "–") +
+    row("= Hall area per court", m => m.fit.count ? fmtArea(m.hallPerCourt) : "–") +
+    sec(`In your ${fmtArea(WHY.area)}`) +
+    row(`Courts in ${fmtArea(WHY.area)}`, m => m.fit.count) +
+    row("Kids per coach", m => `${m.perCoach} <span class="muted small">(${m.s.group}/court${m.s.cpc > 1 ? ` × ${m.s.cpc} courts` : ""})</span>`) +
+    row("Kids at once", m => fmtInt(m.students)) +
+    row("Coaches needed", m => m.coaches) +
+    row("Space used", m => pct(m.usedPct)) +
+    sec(`Money · ${WHY.std === "premium" ? "premium" : "lean"} build`) +
+    row("Fit-out per court", m => costBtn(m, eur(m.courtCost))) +
+    row("Total fit-out", m => costBtn(m, eur(m.investment))) +
+    row(`Fit-out per ${U === "ft²" ? "ft²" : "m²"}`, m => eur(perArea(m.invPerM2))) +
+    row("Fit-out per kid place", m => eur(m.invPerPlace)) +
+    row("Floor space per kid", m => fmtArea(m.m2PerKid)) +
+    row("Coach cost per kid-hour", m => "€" + m.coachPerKidHr.toFixed(2)) +
+    "</tbody>";
+  renderCostModal();
+  renderSportEdit();
+}
+
+// ---------- Cost breakdown (click any fit-out amount) ----------
+let costOpen = null;
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-cost]");
+  if (b) { costOpen = b.dataset.cost; $("costModal").hidden = false; document.body.classList.add("drawer-open"); renderCostModal(); return; }
+  if (!$("costModal").hidden && (e.target.id === "costModal" || e.target.closest("[data-close-cost]"))) closeCostModal();
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("costModal").hidden) closeCostModal(); });
+function closeCostModal() { costOpen = null; $("costModal").hidden = true; document.body.classList.remove("drawer-open"); }
+function renderCostModal() {
+  if (!costOpen) return;
+  const s = SPORTS.find(x => x.k === costOpen); if (!s) return;
+  const m = sportMetrics(s, WHY.area, WHY.coach), C = SPORT_COSTS[s.k], U = perUnit();
+  const basisText = r => r.basis === "fixed" ? "fixed price" :
+    `${fmtArea(r.qty)} × €${(+perArea(r.value).toFixed(2))}/${U} (${r.basis === "court" ? "court area" : "space per court"})`;
+  const srcCell = r => r.src === "est" ? `<span class="tag">estimate</span>` :
+    `<a class="tag src-ok" href="${SOURCES[r.src][1]}" target="_blank" rel="noopener" title="${SOURCES[r.src][0]}">source ↗</a>`;
+  const valueIn = r => r.basis === "fixed"
+    ? cellIn(`cost.${s.k}.${WHY.std}.${r.i}`, r.value, r.item)
+    : cellIn(`cost.${s.k}.${WHY.std}.${r.i}`, perArea(r.value), r.item + " per " + U, "cell-in", "perArea");
+  $("costBody").innerHTML = `
+    <div class="eyebrow">${s.icon} ${s.name} · fit-out of one court</div>
+    <div class="seg" style="margin:10px 0 12px"><button data-std="lean" class="${WHY.std === "lean" ? "on" : ""}">🪶 Lean build</button><button data-std="premium" class="${WHY.std === "premium" ? "on" : ""}">💎 Premium build</button></div>
+    <div class="table-scroll"><table><thead><tr><th>Item</th><th class="l">How it's worked out</th><th>Price (€${"" /* keeps header simple */})</th><th>Amount</th><th>Source</th></tr></thead><tbody>
+      ${m.cost.rows.map(r => `<tr><td>${r.item}</td><td class="l muted small">${basisText(r)}</td><td>${valueIn(r)}</td><td>${eur(r.amount)}</td><td>${srcCell(r)}</td></tr>`).join("")}
+      <tr class="total"><td>One court</td><td></td><td></td><td>${eur(m.cost.total)}</td><td></td></tr>
+      <tr><td>× courts that fit in ${fmtArea(WHY.area)}</td><td></td><td></td><td>${m.fit.count}</td><td></td></tr>
+      <tr class="total"><td>Total fit-out</td><td></td><td></td><td>${eur(m.investment)}</td><td></td></tr>
+    </tbody></table></div>
+    ${C.note ? `<div class="callout" style="margin-top:12px"><div>ℹ️</div><div>${C.note}</div></div>` : ""}
+    <p class="help">Edit any price and every number on the site updates; your edits are saved. “Estimate” means no public price was found, so get 3 quotes. £ prices converted at €1.17/£, excluding VAT. Doesn't include the building (rented) or rooms.</p>
+    ${srcDetails([...new Set([...C.refs, ...m.cost.rows.map(r => r.src)])])}
+    ${resetBtn(`cost.${s.k}.`, "Reset these prices")}`;
 }
 
 // =====================================================================
@@ -1037,6 +1171,10 @@ $("roadmap").innerHTML = ROADMAP.map((p, i) => `<div class="phase" style="--o:${
   <div class="n">${i + 1}</div><div class="when">${p.when}</div><h3>${p.title}</h3><div class="kpi-line">🎯 ${p.kpi}</div>
   <ul>${p.what.map(w => `<li>${w}</li>`).join("")}</ul></div>`).join("");
 function renderMission(m) {
+  $("missionPlan").innerHTML = floorPlanSvg(m.P, true);
+  $("missionPlanLegend").innerHTML = [["🏀 Court + run-off", m.P.courtArea], ...(m.P.gymArea ? [["🏋️ Fitness zone", m.P.gymArea]] : []), ...ROOMS.map(([k, l, ic]) => [ic + " " + l, m.P[k]])]
+    .map(([l, v]) => `<span>${l} <b>${fmtArea(v)}</b></span>`).join("");
+  $("bpSub").textContent = `${fmtArea(m.totalArea)} · setup ${short(m.setup)} · cash needed ${short(m.perHubInvest)}`;
   const x = computeNetwork(), city = rankCities()[0], easy = rankCountries()[0];
   $("missionKpis").innerHTML = kpis([
     { hero: true, label: "Cash needed: first hub", value: short(m.perHubInvest), sub: `${build === "lean" ? "Lean start · " : ""}payback ${m.payback ? m.payback + " mo" : "n/a"}`, go: "calc" },
@@ -1135,7 +1273,8 @@ document.addEventListener("keydown", e => {
 // totals follow (kit lists → hub investment, store items → store size).
 // =====================================================================
 let EDITS = (saved.EDITS && typeof saved.EDITS === "object") ? saved.EDITS : {};
-const PRISTINE = JSON.parse(JSON.stringify({ ACTIVITIES, CONVERSION_KIT, LEAN_FITOUT, STORE_ITEMS, SPORTS, COUNTRIES, PN_FIXED,
+const SPORT_FIELDS = ["group", "cpc", "side", "gap", "endF", "endB", "corridor"];
+const PRISTINE = JSON.parse(JSON.stringify({ ACTIVITIES, CONVERSION_KIT, LEAN_FITOUT, STORE_ITEMS, SPORTS, SPORT_COSTS, COUNTRIES, PN_FIXED,
   CITY_S: Object.fromEntries(CITIES.map(c => [c.name, c.s])) }));
 const sumWhere = (list, tag) => list.filter(r => !tag || r[2] === tag).reduce((s, r) => s + r[1], 0);
 const storeNeeded = () => Math.ceil(STORE_ITEMS.reduce((s, i) => s + i[2], 0) * 1.25);
@@ -1144,7 +1283,8 @@ function restoreData() {
   CONVERSION_KIT.forEach((r, i) => r[1] = PRISTINE.CONVERSION_KIT[i][1]);
   LEAN_FITOUT.forEach((r, i) => r[1] = PRISTINE.LEAN_FITOUT[i][1]);
   STORE_ITEMS.forEach((r, i) => r[2] = PRISTINE.STORE_ITEMS[i][2]);
-  SPORTS.forEach((s, i) => ["courtCost", "group", "side", "gap", "endF", "endB"].forEach(f => s[f] = PRISTINE.SPORTS[i][f]));
+  SPORTS.forEach((s, i) => SPORT_FIELDS.forEach(f => s[f] = PRISTINE.SPORTS[i][f]));
+  for (const k of Object.keys(SPORT_COSTS)) for (const std of ["lean", "premium"]) SPORT_COSTS[k][std].forEach((r, i) => r[2] = PRISTINE.SPORT_COSTS[k][std][i][2]);
   COUNTRIES.forEach((c, i) => { c.labour = PRISTINE.COUNTRIES[i].labour; Object.assign(c.s, PRISTINE.COUNTRIES[i].s); });
   CITIES.forEach(c => Object.assign(c.s, PRISTINE.CITY_S[c.name]));
   Object.assign(PN_FIXED, PRISTINE.PN_FIXED);
@@ -1152,14 +1292,15 @@ function restoreData() {
 // Apply one edit; returns false for unknown paths (they are dropped).
 function applyEdit(path, v) {
   if (typeof path !== "string" || !Number.isFinite(v)) return false;
-  const [kind, a, b] = path.split(".");
+  const [kind, a, b, c] = path.split(".");
   v = Math.max(0, v);
   if (kind === "act" && ACTIVITIES[a] && a !== "empty" && ["att", "price", "cost"].includes(b)) { ACTIVITIES[a][b] = v; return true; }
   if (kind === "kit" && CONVERSION_KIT[+a]) { CONVERSION_KIT[+a][1] = v; return true; }
   if (kind === "lean" && LEAN_FITOUT[+a]) { LEAN_FITOUT[+a][1] = v; return true; }
   if (kind === "store" && STORE_ITEMS[+a]) { STORE_ITEMS[+a][2] = v; return true; }
   const sp = kind === "sport" && SPORTS.find(s => s.k === a);
-  if (sp && ["courtCost", "group", "side", "gap", "endF", "endB"].includes(b)) { sp[b] = b === "group" ? Math.max(1, Math.round(v)) : v; return true; }
+  if (sp && SPORT_FIELDS.includes(b)) { sp[b] = (b === "group" || b === "cpc") ? Math.max(1, Math.round(v)) : v; return true; }
+  if (kind === "cost" && SPORT_COSTS[a] && SPORT_COSTS[a][b] && SPORT_COSTS[a][b][+c]) { SPORT_COSTS[a][b][+c][2] = v; return true; }
   const city = kind === "city" && CITIES.find(c => c.name === a);
   if (city && b in city.s) { city.s[b] = Math.min(10, v); return true; }
   const ctry = kind === "country" && COUNTRIES.find(c => c.code === a);
@@ -1196,7 +1337,7 @@ const resetBtn = (prefix, label = "Reset these numbers") =>
 document.addEventListener("change", e => {
   const el = e.target.closest("[data-edit]");
   if (!el) return;
-  const path = el.dataset.edit, v = el.dataset.unit === "area" ? fromDispArea(Number(el.value)) : Number(el.value);
+  const path = el.dataset.edit, v = el.dataset.unit === "area" ? fromDispArea(Number(el.value)) : el.dataset.unit === "perArea" ? fromPerArea(Number(el.value)) : Number(el.value);
   if (el.value === "" || !applyEdit(path, v)) { el.value = ""; renderAll(); return; }
   EDITS[path] = v;
   relink(); followLinks(path);
@@ -1242,11 +1383,7 @@ function renderEditables(m) {
      <tr class="total"><td>Store room needed (sets the store-room size)</td><td></td><td>${storeNeeded()} m²</td></tr>`;
   $("storeReset").innerHTML = resetBtn("store.");
   // Sports
-  $("sportEdit").innerHTML = `<div class="table-scroll"><table><thead><tr><th>Sport</th><th>Kids per coach</th><th>Fit-out per court (€)</th>
-      <th>Wall → first court (m)</th><th>Between courts (m)</th><th>Front clearance (m)</th><th>Back clearance (m)</th><th>Courts that fit</th></tr></thead><tbody>` +
-    SPORTS.map(sp => `<tr><td>${sp.icon} ${sp.name}</td>${["group", "courtCost", "side", "gap", "endF", "endB"].map(f =>
-      `<td>${cellIn(`sport.${sp.k}.${f}`, sp[f], `${sp.name}: ${f}`)}</td>`).join("")}<td><b>${fitCourts(sp, WHY.area).count}</b></td></tr>`).join("") +
-    `</tbody></table></div><p class="help">Clearances in metres (they convert in the text, not in these boxes). Squash “back” includes the glass back wall and an access corridor.</p>` + resetBtn("sport.");
+
   // Partner network fixed costs
   const PNF = [["setup", "Kit & onboarding per venue (€)"], ["tech", "Software per venue / month (€)"], ["marketing", "Marketing per venue / month (€)"],
     ["manager", "Area manager salary / month (€)"], ["managerPer", "Venues per area manager"], ["launch", "Network launch cost (€)"], ["sessionsPerKid", "Sessions per kid per week"]];
@@ -1254,6 +1391,54 @@ function renderEditables(m) {
   $("cityReset").innerHTML = resetBtn("city.", "Reset city scores");
   $("bizReset").innerHTML = resetBtn("country.", "Reset country scores");
 }
+
+
+// =====================================================================
+// GLOSSARY POP-UPS. Any heading, label or row name that matches a
+// GLOSSARY entry gets a dotted underline; click it for a plain-English
+// explanation and how it's worked out.
+// =====================================================================
+const termKey = t => String(t).toLowerCase().split(" · ")[0].replace(/ft²/g, "m²").replace(/€\s?\d[\d,.]*/g, "€#")
+  .replace(/\d[\d,.]*/g, "#").replace(/\s+/g, " ").trim();
+const TERMS = {};
+for (const [k, v] of Object.entries(GLOSSARY)) TERMS[termKey(k)] = [k.replace(/^[+=]\s*/, ""), ...v];
+const TERM_SEL = "h2, h3 .chart-t, h3, .kpi .l, .sb-item .l, th, td:first-child, dt, .lever-label, .kpi-group-title";
+function enhanceTerms(root) {
+  if (!root || !root.querySelectorAll) return;
+  const list = root.matches && root.matches(TERM_SEL) ? [root, ...root.querySelectorAll(TERM_SEL)] : root.querySelectorAll(TERM_SEL);
+  list.forEach(el => {
+    if (el.classList.contains("term") || el.closest(".term") || el.querySelector(".term, .chart-t") && el.nodeName === "H3") return;
+    const key = termKey(el.textContent);
+    if (!TERMS[key]) return;
+    el.classList.add("term"); el.dataset.term = key; el.tabIndex = 0; el.setAttribute("role", "button");
+  });
+}
+const termPop = document.createElement("div");
+termPop.id = "termPop"; termPop.hidden = true; termPop.setAttribute("role", "dialog");
+document.body.appendChild(termPop);
+function showTerm(el) {
+  const [, text, how] = TERMS[el.dataset.term];
+  const title = el.textContent.trim();
+  termPop.innerHTML = `<div class="tp-head"><b>${title}</b><button aria-label="Close" data-close-term>✕</button></div><p>${text}</p>${how ? `<div class="tp-how"><span>How it's worked out</span>${how}</div>` : ""}`;
+  termPop.hidden = false;
+  const r = el.getBoundingClientRect(), w = Math.min(340, window.innerWidth - 24);
+  termPop.style.width = w + "px";
+  termPop.style.left = Math.max(12, Math.min(window.innerWidth - w - 12, r.left)) + "px";
+  const below = r.bottom + 8, h = termPop.offsetHeight;
+  termPop.style.top = (below + h > window.innerHeight - 8 ? Math.max(8, r.top - h - 8) : below) + "px";
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest(".term");
+  if (t && !e.target.closest("input, button:not(.term), a")) { e.preventDefault(); e.stopPropagation(); showTerm(t); return; }
+  if (!termPop.hidden && (!e.target.closest("#termPop") || e.target.closest("[data-close-term]"))) termPop.hidden = true;
+}, true);
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") termPop.hidden = true;
+  if ((e.key === "Enter" || e.key === " ") && e.target.classList && e.target.classList.contains("term")) { e.preventDefault(); showTerm(e.target); }
+});
+window.addEventListener("scroll", () => { termPop.hidden = true; }, { passive: true });
+if (typeof MutationObserver !== "undefined") new MutationObserver(list => list.forEach(mu => mu.addedNodes.forEach(n => n.nodeType === 1 && enhanceTerms(n))))
+  .observe(document.body, { childList: true, subtree: true });
 
 // =====================================================================
 // Whole-plan state: read it (for cloud save) and apply it (cloud load).
@@ -1274,7 +1459,7 @@ function applyState(s) {
   A = numbersFrom(s.A, DEFAULTS);
   W = numbersFrom(s.W, Object.fromEntries(FACTORS.map(f => [f.k, f.w])));
   BW = numbersFrom(s.BW, Object.fromEntries(BIZ_FACTORS.map(f => [f.k, f.w])));
-  WHY = numbersFrom(s.WHY, { area: 608, coach: 35 });
+  WHY = { ...numbersFrom(s.WHY, { area: 608, coach: 35 }), std: s.WHY && s.WHY.std === "premium" ? "premium" : "lean" };
   TTF = numbersFrom(s.TTF, { fill: 60 });
   PN = numbersFrom(s.PN, Object.fromEntries(PN_LEVERS.map(l => [l.k, l.v])));
   TT = Array.isArray(s.TT) && s.TT.length === 7 && s.TT.every(r => Array.isArray(r) && r.length === TT_HOURS)

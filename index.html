@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=14">
+<link rel="stylesheet" href="assets/styles.css?v=15">
 </head>
 <body>
 
@@ -33,7 +33,7 @@
       <button class="tab" role="tab" data-tab="params">Parameters</button>
     </nav>
     <span class="checked" id="checked"></span>
-    <div class="unit-seg" role="group" aria-label="Area unit"><button data-unit-btn="ft">ft²</button><button data-unit-btn="m">m²</button></div>
+    <div class="unit-seg" role="group" aria-label="Area unit" data-no-unit><button data-unit-btn="ft">ft²</button><button data-unit-btn="m">m²</button></div>
     <button class="cloud-btn" id="cloudBtn" aria-label="Cloud save and share"></button>
   </div>
 </header>
@@ -61,6 +61,12 @@
     <div class="kpis k2" id="missionKpis"></div>
   </div>
 
+  <div class="card" style="margin-top:14px">
+    <div class="sec" style="margin-top:0"><h2>Blueprint: the lean warehouse</h2><span class="sub" id="bpSub"></span></div>
+    <div class="bp-wrap" id="missionPlan"></div>
+    <div class="legend" id="missionPlanLegend"></div>
+    <p class="help">Drawn to scale. Change any room size in the <a href="#calc">Hub calculator</a> (Edit detailed assumptions → Space &amp; rent); the store room grows with the items on its checklist.</p>
+  </div>
   <div class="sec"><h2>The plan: five phases</h2><span class="sub">From one warehouse to Europe</span></div>
   <div class="timeline" id="roadmap"></div>
 
@@ -124,8 +130,11 @@
         <input type="range" id="whyArea" min="608" max="2500" step="10" aria-label="Floor space"></div>
       <div class="lever"><div class="lever-top"><span class="lever-label">Coach €/hour</span><span class="lever-value" id="whyCoachV"></span></div>
         <input type="range" id="whyCoach" min="15" max="80" step="1" aria-label="Coach cost per hour"></div>
-    </div></div>
+    </div>
+    <div class="lever-label" style="margin-top:8px">Build standard</div>
+    <div class="seg" style="margin:4px 0 0"><button data-std="lean">🪶 Lean build</button><button data-std="premium">💎 Premium build</button></div></div>
   </div>
+  <div class="callout info" style="margin-bottom:12px"><div>🎯</div><div><b>What this compares:</b> running a <b>kids' coaching academy</b> in the same floor space. It doesn't compare renting courts to adults by the hour, where padel, for example, can earn a lot per m². Click any underlined term for an explanation, and any fit-out amount for its breakdown and sources.</div></div>
   <div class="sport-row" id="sportPanels"></div>
   <div class="sec"><h2>Head-to-head</h2><span class="sub">brightest bar = best</span></div>
   <div class="cols-3" id="sportCharts"></div>
@@ -337,6 +346,13 @@
   <a href="https://github.com/anuroopbs/basketball-academy-planner" target="_blank" rel="noopener">Source code on GitHub ↗</a></footer>
 </main>
 
+<div class="drawer" id="costModal" hidden>
+  <aside class="drawer-panel wide-panel" role="dialog" aria-label="Fit-out breakdown">
+    <div class="drawer-head"><div><div class="eyebrow">Fit-out breakdown</div><h2>Where this cost comes from</h2></div><button class="btn" data-close-cost aria-label="Close">✕</button></div>
+    <div id="costBody"></div>
+  </aside>
+</div>
+
 <div class="drawer" id="cloudDrawer" hidden>
   <aside class="drawer-panel" role="dialog" aria-label="Cloud save and share">
     <div class="drawer-head"><div><div class="eyebrow">Cloud</div><h2>Save & share this plan</h2></div><button class="btn" data-close aria-label="Close">✕</button></div>
@@ -344,9 +360,9 @@
   </aside>
 </div>
 
-<script src="assets/data.js?v=14"></script>
-<script src="assets/app.js?v=14"></script>
+<script src="assets/data.js?v=15"></script>
+<script src="assets/app.js?v=15"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js"></script>
-<script src="assets/cloud.js?v=14"></script>
+<script src="assets/cloud.js?v=15"></script>
 </body>
 </html>
