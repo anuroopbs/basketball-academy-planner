@@ -76,7 +76,7 @@ const saved = (() => { try { return JSON.parse(localStorage.getItem(STORE_KEY) |
 // Cloud sync (cloud.js) sets this to be told about every change.
 let onStateChange = null;
 function save() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify({ A, W, BW, WHY, TT, TTF, PN, slide, preset, build })); } catch {}
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({ A, W, BW, WHY, TT, TTF, PN, slide, preset, build, EDITS })); } catch {}
   if (onStateChange) onStateChange();
 }
 
@@ -330,12 +330,6 @@ document.querySelectorAll("[data-build]").forEach(b => b.addEventListener("click
   Object.assign(A, BUILDS[build]);
   save(); syncInputs(); renderAll();
 }));
-$("leanList").innerHTML = LEAN_FITOUT.map(([k, v]) => `<tr><td>${k}</td><td>${eur(v)}</td></tr>`).join("") +
-  `<tr class="total"><td>Lean fit-out total</td><td>${eur(LEAN_FITOUT.reduce((s, [, v]) => s + v, 0))}</td></tr>`;
-const storeNeed = STORE_ITEMS.reduce((s, i) => s + i[2], 0);
-$("storeList").innerHTML = STORE_ITEMS.map(([k, q, a]) => `<tr><td>${k}</td><td class="l muted">${q}</td><td>${a} m²</td></tr>`).join("") +
-  `<tr><td class="muted">Aisles & access (~25%)</td><td></td><td>${(storeNeed * 0.25).toFixed(1)} m²</td></tr>
-   <tr class="total"><td>Store room needed</td><td></td><td>≈ ${Math.ceil(storeNeed * 1.25)} m²</td></tr>`;
 document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => {
   preset = b.dataset.preset;
   Object.entries(PRESETS[preset]).forEach(([k, v]) => { if (k === "fill") TTF.fill = v; else A[k] = v; });
@@ -534,10 +528,6 @@ $("tt").addEventListener("click", e => {
 });
 $("ttReset").addEventListener("click", () => { TT = TT_DEFAULT.map(r => r.slice()); save(); renderAll(); });
 $("ttClear").addEventListener("click", () => { TT = TT.map(r => r.map(k => k === "kids" ? "kids" : "empty")); save(); renderAll(); });
-$("kitTable").innerHTML = `<thead><tr><th>Item</th><th>Cost</th></tr></thead><tbody>` +
-  CONVERSION_KIT.map(([k, v]) => `<tr><td>${k}</td><td>${eur(v)}</td></tr>`).join("") +
-  `<tr class="total"><td>Total conversion kit</td><td>${eur(kitTotal)}</td></tr></tbody>`;
-$("kitHint").textContent = `${eur(kitTotal)} one-time, included in the hub investment`;
 $("ttSrc").innerHTML = srcDetails(["court_bb", "court_bd", "court_pb", "court_hb", "est"]);
 
 function renderTimetable(m) {
@@ -724,26 +714,32 @@ function renderPartners(m) {
 // =====================================================================
 let W = { ...Object.fromEntries(FACTORS.map(f => [f.k, f.w])), ...(saved.W || {}) };
 let selCity = null;
-const CITIES = CITY_DATA.map(([name, cc, ...rest]) => { const why = rest.pop(); return { name, cc, why, s: Object.fromEntries(FACTORS.map((f, i) => [f.k, rest[i]])) }; });
+const CITIES = CITY_DATA.map(([name, cc, tier, ...rest]) => { const why = rest.pop(); return { name, cc, tier, why, s: Object.fromEntries(FACTORS.map((f, i) => [f.k, rest[i]])) }; });
 const countryName = cc => (COUNTRIES.find(c => c.code === cc) || {}).name || ({ LT: "Lithuania" })[cc] || cc;
 function rankCities() {
   const tw = FACTORS.reduce((s, f) => s + W[f.k], 0) || 1;
-  return CITIES.map(c => ({ ...c, score: FACTORS.reduce((s, f) => s + c.s[f.k] * W[f.k], 0) / tw * 10 })).sort((a, b) => b.score - a.score);
+  return CITIES.map(c => ({ ...c, score: FACTORS.reduce((s, f) => s + c.s[f.k] * W[f.k], 0) / tw * 10 })).sort((a, b) => ((a.tier === 1) - (b.tier === 1)) || b.score - a.score);
 }
 $("weights").innerHTML = FACTORS.map(f => `<div class="lever-box" style="padding:4px 12px 6px">${leverHtml({ ...f, min: 0, max: 40, step: 1, help: f.why }, W[f.k], "w_")}</div>`).join("");
 FACTORS.forEach(f => $("w_" + f.k).addEventListener("input", e => { W[f.k] = Number(e.target.value); save(); renderAll(); }));
 $("resetWeights").addEventListener("click", () => { FACTORS.forEach(f => { W[f.k] = f.w; $("w_" + f.k).value = f.w; }); save(); renderAll(); paintAll(); });
 $("cityRank").addEventListener("click", e => { const r = e.target.closest("[data-city]"); if (r) { selCity = r.dataset.city; renderCities(); } });
-$("cityHeat").addEventListener("click", e => { const r = e.target.closest("[data-city]"); if (r) { selCity = r.dataset.city; renderCities(); $("cityDetail").scrollIntoView({ block: "nearest", behavior: "smooth" }); } });
+$("cityHeat").addEventListener("click", e => { if (e.target.closest("input")) return; const r = e.target.closest("[data-city]"); if (r) { selCity = r.dataset.city; renderCities(); $("cityDetail").scrollIntoView({ block: "nearest", behavior: "smooth" }); } });
 $("citySrc").innerHTML = srcDetails(FACTORS.map(f => f.src).concat("est"), "<li>Scores are 1–10 estimates from these sources, for comparison only. Check your shortlist against local census and school-location data</li>");
 
+const TIER_SEP = "Tier 1 · big, expensive cities, kept for later";
+const tierTag = t => t ? `<span class="tier t${t}">${t === 1 ? "T1 · pricey" : "Tier " + t}</span>` : "";
 function rankRows(list, key, valKey, sel, label) {
   const max = Math.max(...list.map(c => c[valKey]));
   const attr = key === "name" ? "city" : "country";
-  return list.map((c, i) => `<div class="hbar-row${c[key] === sel ? " sel" : ""}" data-${attr}="${c[key]}">
-    <span class="rk">${i + 1}</span><span><b>${c[label]}</b></span>
-    <div class="hbar"><span style="width:${c[valKey] / max * 100}%;background:${i < 5 ? "linear-gradient(90deg,#ff7a1a,#ffb547)" : "#3a404c"}"></span></div>
-    <span class="v">${c[valKey].toFixed(1)}</span></div>`).join("");
+  return list.map((c, i) => {
+    const sep = c.tier === 1 && (i === 0 || list[i - 1].tier !== 1) ? `<div class="tier-sep">${TIER_SEP}</div>` : "";
+    const hot = i < 5 && c.tier !== 1;
+    return sep + `<div class="hbar-row${c[key] === sel ? " sel" : ""}${c.tier === 1 ? " dim" : ""}" data-${attr}="${c[key]}">
+    <span class="rk">${i + 1}</span><span><b>${c[label]}</b> ${tierTag(c.tier)}</span>
+    <div class="hbar"><span style="width:${c[valKey] / max * 100}%;background:${hot ? "linear-gradient(90deg,#ff7a1a,#ffb547)" : "#3a404c"}"></span></div>
+    <span class="v">${c[valKey].toFixed(1)}</span></div>`;
+  }).join("");
 }
 function renderCities() {
   const tw = FACTORS.reduce((s, f) => s + W[f.k], 0) || 1;
@@ -752,14 +748,14 @@ function renderCities() {
   if (!selCity || !ranked.find(c => c.name === selCity)) selCity = ranked[0].name;
   $("cityRank").innerHTML = rankRows(ranked, "name", "score", selCity, "name");
   const c = ranked.find(x => x.name === selCity), rank = ranked.indexOf(c) + 1;
-  $("cityDetail").innerHTML = `<div class="eyebrow">#${rank} of ${ranked.length} · ${countryName(c.cc)}</div>
+  $("cityDetail").innerHTML = `<div class="eyebrow">#${rank} of ${ranked.length} · ${countryName(c.cc)} · ${c.tier === 1 ? "Tier 1 (expensive)" : "Tier " + c.tier}</div>
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><h2>${c.name}</h2><span style="font-size:28px;font-weight:900;color:var(--accent-2)">${c.score.toFixed(1)}</span></div>
     <p class="muted" style="margin:6px 0 12px;font-size:13px">${c.why}</p>
     <div class="mini-bars">${FACTORS.map(f => `<div class="hbar-row"><span>${f.label} <span class="muted small">${Math.round(W[f.k] / tw * 100)}%</span></span>
       <div class="hbar"><span style="width:${c.s[f.k] * 10}%;background:${heatBg(c.s[f.k])}"></span></div><span class="v">${c.s[f.k]}</span></div>`).join("")}</div>`;
   $("cityHeat").innerHTML = `<thead><tr><th>#</th><th class="l">City</th><th>Score</th>${FACTORS.map(f => `<th title="${f.why}">${f.label.replace(" (few academies)", "").replace("Residential / family areas", "Residential")}</th>`).join("")}</tr></thead><tbody>` +
-    ranked.map((x, i) => `<tr class="clickable${x.name === selCity ? " sel" : ""}" data-city="${x.name}"><td>${i + 1}</td><td class="l"><b>${x.name}</b> <span class="muted small">${x.cc}</span></td>
-      <td><b style="color:var(--accent-2)">${x.score.toFixed(1)}</b></td>${FACTORS.map(f => `<td class="heat" style="background:${heatBg(x.s[f.k])}">${x.s[f.k]}</td>`).join("")}</tr>`).join("") + "</tbody>";
+    ranked.map((x, i) => `${x.tier === 1 && (i === 0 || ranked[i - 1].tier !== 1) ? `<tr><td colspan="${FACTORS.length + 3}" class="tier-row">${TIER_SEP}</td></tr>` : ""}<tr class="clickable${x.name === selCity ? " sel" : ""}${x.tier === 1 ? " dim" : ""}" data-city="${x.name}"><td>${i + 1}</td><td class="l"><b>${x.name}</b> <span class="muted small">${x.cc}</span> ${tierTag(x.tier)}</td>
+      <td><b style="color:var(--accent-2)">${x.score.toFixed(1)}</b></td>${FACTORS.map(f => `<td class="heat" style="background:${heatBg(x.s[f.k])}">${cellIn(`city.${x.name}.${f.k}`, x.s[f.k], `${x.name}: ${f.label}`, "heat-in")}</td>`).join("")}</tr>`).join("") + "</tbody>";
 }
 
 // =====================================================================
@@ -773,7 +769,7 @@ function rankCountries() {
   return COUNTRIES.map(c => {
     const sc = { ...c.s, labour: labourScore(c.labour) };
     const ease = BIZ_FACTORS.reduce((t, f) => t + sc[f.k] * BW[f.k], 0) / tw * 10;
-    const best = cities.filter(x => x.cc === c.code)[0];
+    const best = cities.filter(x => x.cc === c.code && x.tier !== 1)[0] || cities.filter(x => x.cc === c.code)[0];
     return { ...c, sc, ease, demand: best ? best.score : 0, bestCity: best ? best.name : c.city };
   }).sort((a, b) => b.ease - a.ease);
 }
@@ -782,7 +778,7 @@ BIZ_FACTORS.forEach(f => $("bw_" + f.k).addEventListener("input", e => { BW[f.k]
 $("bizResetWeights").addEventListener("click", () => { BIZ_FACTORS.forEach(f => { BW[f.k] = f.w; $("bw_" + f.k).value = f.w; }); save(); renderAll(); paintAll(); });
 const pickCountry = e => { const r = e.target.closest("[data-country]"); if (r) { selCountry = r.dataset.country; renderBusiness(); return true; } return false; };
 $("bizRank").addEventListener("click", pickCountry);
-$("bizHeat").addEventListener("click", e => { if (pickCountry(e)) $("bizDetail").scrollIntoView({ block: "nearest", behavior: "smooth" }); });
+$("bizHeat").addEventListener("click", e => { if (e.target.closest("input")) return; if (pickCountry(e)) $("bizDetail").scrollIntoView({ block: "nearest", behavior: "smooth" }); });
 $("bizMatrix").addEventListener("click", e => { if (pickCountry(e)) $("bizDetail").scrollIntoView({ block: "nearest", behavior: "smooth" }); });
 $("bizSrc").innerHTML = srcDetails(["eurostat_lc", "eurostat_news", "taxfound", "bready", "estonia_reg", "ie_cro", "ie_vetting", "pt_hora", "fr_coach", "fr_coach2", "est"],
   "<li>Registration times, costs and the youth-sport rules score are summaries for comparison. Confirm current fees with each national registry</li>");
@@ -801,7 +797,7 @@ function matrixSvg(list) {
   g += q(Wd - R - 8, T + 16, "LAUNCH FIRST", "#22c55e", "end") + q(L + 8, T + 16, "BIG PRIZE, HARDER", "#eab308", "start")
      + q(Wd - R - 8, H - B - 8, "EASY, SMALLER", "#60a5fa", "end") + q(L + 8, H - B - 8, "LATER", "#5c6474", "start");
   g += `<text x="${(L + Wd - R) / 2}" y="${H - 10}" fill="#8b93a3" font-size="12" text-anchor="middle">Ease of starting →</text>
-    <text x="14" y="${(T + H - B) / 2}" fill="#8b93a3" font-size="12" text-anchor="middle" transform="rotate(-90 14 ${(T + H - B) / 2})">Demand in best city →</text>`;
+    <text x="14" y="${(T + H - B) / 2}" fill="#8b93a3" font-size="12" text-anchor="middle" transform="rotate(-90 14 ${(T + H - B) / 2})">Demand in best tier 2/3 city →</text>`;
   list.forEach(c => {
     const cx = X(c.ease), cy = Y(c.demand), on = c.code === selCountry;
     g += `<g data-country="${c.code}" style="cursor:pointer"><circle cx="${cx}" cy="${cy}" r="${on ? 10 : 7}" fill="${on ? "#ffb547" : "#ff7a1a"}" stroke="#0a0c11" stroke-width="2.5"/>
@@ -829,7 +825,7 @@ function renderBusiness() {
       <h3 style="margin-top:12px">Challenges</h3><ul class="plist chal">${c.challenges.map(p => `<li>${p}</li>`).join("")}</ul>${srcDetails(c.src)}</div></div>`;
   $("bizHeat").innerHTML = `<thead><tr><th>#</th><th class="l">Country</th><th>Ease</th>${BIZ_FACTORS.map(f => `<th>${f.label.replace(" (lower = better)", "").replace("Setup cost & minimum capital", "Setup cost")}</th>`).join("")}<th>€/hour</th><th>Demand</th></tr></thead><tbody>` +
     list.map((x, i) => `<tr class="clickable${x.code === selCountry ? " sel" : ""}" data-country="${x.code}"><td>${i + 1}</td><td class="l"><b>${x.name}</b></td><td><b style="color:var(--accent-2)">${x.ease.toFixed(1)}</b></td>
-      ${BIZ_FACTORS.map(f => `<td class="heat" style="background:${heatBg(x.sc[f.k])}">${x.sc[f.k].toFixed(0)}</td>`).join("")}<td>${x.labour.toFixed(1)}</td><td>${x.demand.toFixed(0)}</td></tr>`).join("") + "</tbody>";
+      ${BIZ_FACTORS.map(f => `<td class="heat" style="background:${heatBg(x.sc[f.k])}">${f.k === "labour" ? x.sc[f.k].toFixed(0) : cellIn(`country.${x.code}.${f.k}`, x.sc[f.k], `${x.name}: ${f.label}`, "heat-in")}</td>`).join("")}<td>${cellIn(`country.${x.code}.labour`, x.labour, `${x.name}: labour cost €/hour`)}</td><td>${x.demand.toFixed(0)}</td></tr>`).join("") + "</tbody>";
 }
 
 // =====================================================================
@@ -1023,11 +1019,137 @@ document.addEventListener("keydown", e => {
 });
 
 // =====================================================================
+// EDITABLE DATA. Every model number that lives in data.js (activity
+// prices, kits, store items, sport costs, city and country scores,
+// partner costs) can be edited in place. Edits are kept as
+// { "path": value }, saved with the plan and re-applied on load; linked
+// totals follow (kit lists → hub investment, store items → store size).
+// =====================================================================
+let EDITS = (saved.EDITS && typeof saved.EDITS === "object") ? saved.EDITS : {};
+const PRISTINE = JSON.parse(JSON.stringify({ ACTIVITIES, CONVERSION_KIT, LEAN_FITOUT, STORE_ITEMS, SPORTS, COUNTRIES, PN_FIXED,
+  CITY_S: Object.fromEntries(CITIES.map(c => [c.name, c.s])) }));
+const sumWhere = (list, tag) => list.filter(r => !tag || r[2] === tag).reduce((s, r) => s + r[1], 0);
+const storeNeeded = () => Math.ceil(STORE_ITEMS.reduce((s, i) => s + i[2], 0) * 1.25);
+function restoreData() {
+  Object.keys(ACTIVITIES).forEach(k => Object.assign(ACTIVITIES[k], PRISTINE.ACTIVITIES[k]));
+  CONVERSION_KIT.forEach((r, i) => r[1] = PRISTINE.CONVERSION_KIT[i][1]);
+  LEAN_FITOUT.forEach((r, i) => r[1] = PRISTINE.LEAN_FITOUT[i][1]);
+  STORE_ITEMS.forEach((r, i) => r[2] = PRISTINE.STORE_ITEMS[i][2]);
+  SPORTS.forEach((s, i) => { s.courtCost = PRISTINE.SPORTS[i].courtCost; s.group = PRISTINE.SPORTS[i].group; });
+  COUNTRIES.forEach((c, i) => { c.labour = PRISTINE.COUNTRIES[i].labour; Object.assign(c.s, PRISTINE.COUNTRIES[i].s); });
+  CITIES.forEach(c => Object.assign(c.s, PRISTINE.CITY_S[c.name]));
+  Object.assign(PN_FIXED, PRISTINE.PN_FIXED);
+}
+// Apply one edit; returns false for unknown paths (they are dropped).
+function applyEdit(path, v) {
+  if (typeof path !== "string" || !Number.isFinite(v)) return false;
+  const [kind, a, b] = path.split(".");
+  v = Math.max(0, v);
+  if (kind === "act" && ACTIVITIES[a] && a !== "empty" && ["att", "price", "cost"].includes(b)) { ACTIVITIES[a][b] = v; return true; }
+  if (kind === "kit" && CONVERSION_KIT[+a]) { CONVERSION_KIT[+a][1] = v; return true; }
+  if (kind === "lean" && LEAN_FITOUT[+a]) { LEAN_FITOUT[+a][1] = v; return true; }
+  if (kind === "store" && STORE_ITEMS[+a]) { STORE_ITEMS[+a][2] = v; return true; }
+  const sp = kind === "sport" && SPORTS.find(s => s.k === a);
+  if (sp && (b === "courtCost" || b === "group")) { sp[b] = b === "group" ? Math.max(1, Math.round(v)) : v; return true; }
+  const city = kind === "city" && CITIES.find(c => c.name === a);
+  if (city && b in city.s) { city.s[b] = Math.min(10, v); return true; }
+  const ctry = kind === "country" && COUNTRIES.find(c => c.code === a);
+  if (ctry && b === "labour") { ctry.labour = v; return true; }
+  if (ctry && b in ctry.s) { ctry.s[b] = Math.min(10, v); return true; }
+  if (kind === "pnf" && a in PN_FIXED) { PN_FIXED[a] = (a === "managerPer" || a === "sessionsPerKid") ? Math.max(1, v) : v; return true; }
+  return false;
+}
+// Keep the build presets in step with the editable lists.
+function relink() {
+  BUILDS.full.convKit = sumWhere(CONVERSION_KIT);
+  BUILDS.lean.courtFitout = sumWhere(LEAN_FITOUT, "court");
+  BUILDS.lean.supportFitout = sumWhere(LEAN_FITOUT, "rooms");
+  BUILDS.lean.convKit = sumWhere(LEAN_FITOUT, "kit");
+}
+function applyAllEdits() {
+  restoreData();
+  for (const [p, v] of Object.entries(EDITS)) if (!applyEdit(p, Number(v))) delete EDITS[p];
+  relink();
+}
+// Linked numbers follow the lists they come from.
+function followLinks(prefix) {
+  if (prefix.startsWith("kit") && build === "full") A.convKit = BUILDS.full.convKit;
+  if (prefix.startsWith("lean") && build === "lean")
+    Object.assign(A, { courtFitout: BUILDS.lean.courtFitout, supportFitout: BUILDS.lean.supportFitout, convKit: BUILDS.lean.convKit });
+  if (prefix.startsWith("store")) A.storeArea = storeNeeded();
+}
+const num2 = v => Math.round(v * 100) / 100;
+const cellIn = (path, value, label, cls = "cell-in") =>
+  `<input class="${cls}" type="number" min="0" step="any" inputmode="decimal" data-edit="${path}" value="${num2(value)}" aria-label="${label}" title="Edit: ${label}">`;
+const resetBtn = (prefix, label = "Reset these numbers") =>
+  Object.keys(EDITS).some(p => p.startsWith(prefix)) ? `<button class="btn" data-reset-edits="${prefix}" style="margin-top:10px">↺ ${label}</button>` : "";
+
+document.addEventListener("change", e => {
+  const el = e.target.closest("[data-edit]");
+  if (!el) return;
+  const path = el.dataset.edit, v = Number(el.value);
+  if (el.value === "" || !applyEdit(path, v)) { el.value = ""; renderAll(); return; }
+  EDITS[path] = v;
+  relink(); followLinks(path);
+  buildAssumptions(); save(); renderWhy(); renderAll(); paintAll();
+});
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-reset-edits]");
+  if (!b) return;
+  const pre = b.dataset.resetEdits;
+  Object.keys(EDITS).forEach(p => { if (p.startsWith(pre)) delete EDITS[p]; });
+  applyAllEdits(); followLinks(pre);
+  buildAssumptions(); save(); renderWhy(); renderAll(); paintAll();
+});
+
+function renderEditables(m) {
+  const P = m.P, fill = TTF.fill / 100;
+  // Timetable activities
+  $("actEdit").innerHTML = `<div class="table-scroll"><table><thead><tr><th>Activity</th><th class="l">Charged as</th><th>People / session (target)</th><th>Price (€)</th><th>Cost / session (€)</th><th>Revenue / session</th></tr></thead><tbody>` +
+    Object.entries(ACTIVITIES).filter(([k]) => k !== "empty").map(([k, a]) => {
+      const s = actSession(k, P, fill);
+      const att = k === "kids" ? `<span class="muted small">${A.group} × ${A.occ}% (calculator)</span>` : a.type === "flat" ? "–" : cellIn(`act.${k}.att`, a.att, `${a.name}: people`);
+      const price = k === "kids" ? `<span class="muted small">from the €${A.kidsFee}/mo fee</span>` : k === "adults" ? `<span class="muted small">from the €${A.adultFee}/mo fee</span>`
+        : k === "pickup" ? `<span class="muted small">€${A.pickupFee} (calculator)</span>` : cellIn(`act.${k}.price`, a.price, `${a.name}: price`);
+      return `<tr><td>${a.icon} ${a.name}</td><td class="l muted small">${a.type === "flat" ? "Whole-court hire / hour" : a.type === "member" ? "Membership" : "Per person"}</td>
+        <td>${att}</td><td>${price}</td><td>${cellIn(`act.${k}.cost`, a.cost, `${a.name}: cost`)}</td><td>${eur(s.rev)}</td></tr>`;
+    }).join("") + `</tbody></table></div>` + resetBtn("act.");
+  // Full conversion kit
+  const kit = sumWhere(CONVERSION_KIT);
+  $("kitTable").innerHTML = `<thead><tr><th>Item</th><th>Cost (€)</th></tr></thead><tbody>` +
+    CONVERSION_KIT.map(([k, v], i) => `<tr><td>${k}</td><td>${cellIn(`kit.${i}`, v, k)}</td></tr>`).join("") +
+    `<tr class="total"><td>Total (used by the Full build)</td><td>${eur(kit)}</td></tr></tbody>`;
+  $("kitReset").innerHTML = resetBtn("kit.");
+  $("kitHint").textContent = `${eur(kit)} full kit · editable`;
+  // Lean fit-out shopping list
+  const tagName = { court: "court", rooms: "rooms", kit: "starter kit" };
+  $("leanList").innerHTML = LEAN_FITOUT.map(([k, v, t], i) => `<tr><td>${k} <span class="muted small">· ${tagName[t]}</span></td><td>${cellIn(`lean.${i}`, v, k)}</td></tr>`).join("") +
+    `<tr class="total"><td>Lean fit-out total</td><td>${eur(sumWhere(LEAN_FITOUT))}</td></tr>`;
+  $("leanReset").innerHTML = resetBtn("lean.");
+  // Store room
+  const need = STORE_ITEMS.reduce((s, i) => s + i[2], 0);
+  $("storeList").innerHTML = STORE_ITEMS.map(([k, q, a], i) => `<tr><td>${k}</td><td class="l muted">${q}</td><td>${cellIn(`store.${i}`, a, k + " (m²)")}</td></tr>`).join("") +
+    `<tr><td class="muted">Aisles & access (~25%)</td><td></td><td>${(need * 0.25).toFixed(1)} m²</td></tr>
+     <tr class="total"><td>Store room needed (sets the store-room size)</td><td></td><td>${storeNeeded()} m²</td></tr>`;
+  $("storeReset").innerHTML = resetBtn("store.");
+  // Sports
+  $("sportEdit").innerHTML = `<div class="table-scroll"><table><thead><tr><th>Sport</th><th>Kids per coach</th><th>Fit-out per court (€)</th></tr></thead><tbody>` +
+    SPORTS.map(s => `<tr><td>${s.icon} ${s.name}</td><td>${cellIn(`sport.${s.k}.group`, s.group, s.name + ": kids per coach")}</td><td>${cellIn(`sport.${s.k}.courtCost`, s.courtCost, s.name + ": fit-out per court")}</td></tr>`).join("") +
+    `</tbody></table></div>` + resetBtn("sport.");
+  // Partner network fixed costs
+  const PNF = [["setup", "Kit & onboarding per venue (€)"], ["tech", "Software per venue / month (€)"], ["marketing", "Marketing per venue / month (€)"],
+    ["manager", "Area manager salary / month (€)"], ["managerPer", "Venues per area manager"], ["launch", "Network launch cost (€)"], ["sessionsPerKid", "Sessions per kid per week"]];
+  $("pnFixedEdit").innerHTML = `<div class="groups"><div class="group">${PNF.map(([k, l]) => `<div class="field"><label>${l}</label>${cellIn(`pnf.${k}`, PN_FIXED[k], l)}</div>`).join("")}</div></div>` + resetBtn("pnf.");
+  $("cityReset").innerHTML = resetBtn("city.", "Reset city scores");
+  $("bizReset").innerHTML = resetBtn("country.", "Reset country scores");
+}
+
+// =====================================================================
 // Whole-plan state: read it (for cloud save) and apply it (cloud load).
 // Loaded data is untrusted, so every value is coerced to a number or a
 // known activity key before it reaches the page.
 // =====================================================================
-function getState() { return { A, W, BW, WHY, TT, TTF, PN, preset, build }; }
+function getState() { return { A, W, BW, WHY, TT, TTF, PN, preset, build, EDITS }; }
 function numbersFrom(src, defaults) {
   const out = { ...defaults };
   if (src && typeof src === "object") for (const k of Object.keys(defaults)) {
@@ -1049,6 +1171,10 @@ function applyState(s) {
     : TT_DEFAULT.map(r => r.slice());
   preset = PRESETS[s.preset] ? s.preset : "";
   build = BUILDS[s.build] ? s.build : "";
+  EDITS = {};
+  if (s.EDITS && typeof s.EDITS === "object")
+    for (const [p, v] of Object.entries(s.EDITS).slice(0, 2000)) if (Number.isFinite(Number(v))) EDITS[p] = Number(v);
+  applyAllEdits();
   LEVERS.forEach(l => $("l_" + l.k).value = A[l.k]);
   PN_LEVERS.forEach(l => $("pn_" + l.k).value = PN[l.k]);
   FACTORS.forEach(f => $("w_" + f.k).value = W[f.k]);
@@ -1063,6 +1189,7 @@ function applyState(s) {
 // =====================================================================
 function renderAll() {
   const m = computeAll();
+  renderEditables(m);
   renderCalc(m);
   renderTimetable(m);
   renderPalette();
@@ -1073,6 +1200,7 @@ function renderAll() {
   renderMission(m);
   renderDeck();
 }
+applyAllEdits();
 buildAssumptions();
 renderWhy();
 renderStreamFilter();

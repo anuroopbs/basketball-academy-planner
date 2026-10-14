@@ -172,15 +172,15 @@ const BUILDS = {
           launch: 10000, legal: 8000, depositMonths: 3, asstCoaches: 2, admin: 2000, cleaning: 1200, brand: 800 },
 };
 const LEAN_FITOUT = [
-  ["Modular sports-floor tiles on the existing concrete (~540 m²)", 15000],
-  ["2 adjustable main hoops + 4 wall-mounted side baskets", 12000],
-  ["LED high-bay lighting", 8000],
-  ["Prefab changing room + 2 WCs/showers", 10000],
-  ["30 lockers", 3000],
-  ["Office furniture & IT", 2500],
-  ["Store-room shelving & racks", 2500],
-  ["Entrance, reception desk & signage", 2000],
-  ["Starter multi-use kit: badminton & pickleball nets, yoga mats", 6000],
+  ["Modular sports-floor tiles on the existing concrete (~540 m²)", 15000, "court"],
+  ["2 adjustable main hoops + 4 wall-mounted side baskets", 12000, "court"],
+  ["LED high-bay lighting", 8000, "court"],
+  ["Prefab changing room + 2 WCs/showers", 10000, "rooms"],
+  ["30 lockers", 3000, "rooms"],
+  ["Office furniture & IT", 2500, "rooms"],
+  ["Store-room shelving & racks", 2500, "rooms"],
+  ["Entrance, reception desk & signage", 2000, "rooms"],
+  ["Starter multi-use kit: badminton & pickleball nets, yoga mats", 6000, "kit"],
 ];
 
 // ---------------------------------------------------------------------
@@ -282,21 +282,51 @@ const FACTORS = [
   { k: "pay",      label: "Ability to pay",             w: 5,  why: "Household income to afford monthly fees", src: "est" },
   { k: "cost",     label: "Low operating cost",         w: 5,  why: "Cheaper rent and salaries (10 = cheapest)", src: "eurostat_lc" },
 ];
-//  name, country code, density, youth, schools, resid, interest, gap, pay, cost, why
+// Tier 1 = big, expensive metros (shown last: too costly for the first hub).
+// Tier 2 = mid-size cities; Tier 3 = smaller cities. Dublin removed on request.
+//  name, country code, tier, density, youth, schools, resid, interest, gap, pay, cost, why
 const CITY_DATA = [
-  ["Paris",     "FR", 10, 7, 9, 7, 8, 5, 8, 3, "Very dense, with many schools in every arrondissement and one of the youngest populations in the EU. Basketball is booming (the Wembanyama effect, Olympic silver in 2024). Rents are high, so hire municipal gyms by the hour."],
-  ["Dublin",    "IE",  5,10, 7, 8, 5, 9, 9, 3, "Ireland has the highest share of children in the EU. Youth basketball is growing but indoor courts are scarce and clubs have waiting lists. High incomes, and it's English-speaking."],
-  ["Barcelona", "ES",  9, 5, 8, 7, 9, 3, 6, 5, "Very dense family neighbourhoods and a strong basketball culture. Lots of competition, so stand out on coaching quality."],
-  ["Athens",    "GR",  9, 4, 8, 6, 9, 3, 4, 8, "Basketball is close to the national sport, residential areas are dense and costs are low. Lower incomes cap fees."],
-  ["Madrid",    "ES",  6, 5, 8, 8, 9, 3, 6, 6, "Large family suburbs and a strong school-club basketball culture. A mature market."],
-  ["Amsterdam", "NL",  6, 6, 7, 6, 5, 7, 9, 3, "High incomes, an international community and a clear shortage of basketball clubs. Halls are expensive."],
-  ["Berlin",    "DE",  5, 5, 7, 7, 7, 6, 7, 6, "Germany's 2023 World Cup win boosted interest, and costs are moderate."],
-  ["Munich",    "DE",  5, 5, 7, 7, 6, 6, 9, 3, "Wealthy families. Very high costs and scarce hall time."],
-  ["Milan",     "IT",  7, 4, 7, 6, 7, 5, 7, 4, "A dense city with a basketball tradition, but an older population."],
-  ["Warsaw",    "PL",  4, 6, 6, 7, 6, 7, 5, 8, "Fast-growing, with young families and low costs."],
-  ["Lisbon",    "PT",  6, 4, 6, 6, 5, 7, 5, 6, "Growing numbers of expat families and few competitors, but basketball is a small sport there."],
-  ["Tallinn",   "EE",  3, 5, 5, 6, 8, 6, 6, 7, "A digital-first capital where starting a company is very easy and basketball is popular, but the market is small (~460k people)."],
-  ["Vilnius",   "LT",  2, 6, 4, 5,10, 2, 4, 8, "Basketball is the national religion, but the city is small and already full of clubs."],
+  // ---- Tier 2 ----
+  ["Valencia",     "ES", 2, 8, 5, 8, 8, 9, 4, 6, 7, "Spain's 3rd city: dense family neighbourhoods, and Valencia Basket's L'Alqueria academy shows huge youth demand. Rents far below Madrid or Barcelona."],
+  ["Lyon",         "FR", 2,10, 7, 9, 7, 9, 5, 7, 5, "Very dense, young, and home to ASVEL (Tony Parker's club). Strong demand, but French coaching-licence rules apply."],
+  ["Bologna",      "IT", 2, 6, 4, 7, 7,10, 5, 7, 6, "Italy's “Basket City” (Virtus and Fortitudo). Basketball is part of the culture and incomes are good, though the population is older."],
+  ["Thessaloniki", "GR", 2,10, 4, 8, 7, 9, 4, 4, 9, "Extremely dense and basketball-mad (PAOK, Aris), with very low costs. Lower incomes cap fees."],
+  ["Bilbao",       "ES", 2, 9, 4, 8, 7, 8, 5, 8, 5, "Dense, high Basque incomes and Bilbao Basket. A good balance of ability to pay and demand."],
+  ["Kaunas",       "LT", 2, 3, 6, 6, 7,10, 3, 5, 9, "Home of Žalgiris, Europe's most basketball-obsessed city, and cheap. Already well served by clubs."],
+  ["Málaga",       "ES", 2, 4, 5, 7, 7, 9, 5, 5, 7, "Unicaja basketball culture plus fast-growing expat and tech families. Lower costs than the big two."],
+  ["Lille",        "FR", 2, 8, 7, 8, 7, 7, 6, 5, 7, "Dense student and family city near Belgium, young population, moderate costs."],
+  ["Nantes",       "FR", 2, 7, 7, 7, 8, 7, 6, 6, 6, "Fast-growing family city with good schools and a gap in private youth academies."],
+  ["Zaragoza",     "ES", 2, 3, 5, 7, 8, 8, 6, 6, 8, "Big, affordable city with Casademont Zaragoza and room for a modern academy."],
+  ["Porto",        "PT", 2, 9, 4, 7, 6, 6, 7, 5, 7, "Dense and affordable, with FC Porto basketball. Few private academies yet."],
+  ["Wrocław",      "PL", 2, 5, 6, 7, 7, 6, 7, 6, 8, "Fast-growing, young families and low costs. Basketball is rising."],
+  ["Gdańsk",       "PL", 2, 3, 6, 6, 7, 6, 7, 6, 7, "Tri-city area (with Sopot's Trefl), young families and low costs."],
+  ["Eindhoven",    "NL", 2, 6, 6, 7, 7, 5, 8, 8, 5, "Tech hub with high incomes and an international community. Very few basketball clubs."],
+  ["Bonn",         "DE", 2, 5, 5, 7, 8, 8, 6, 8, 5, "Telekom Baskets, wealthy families, and cheaper than Cologne or Düsseldorf."],
+  ["Cork",         "IE", 2, 3,10, 7, 8, 5, 9, 8, 5, "Ireland's young population at a lower cost than Dublin. Scarce indoor courts and clubs with waiting lists."],
+  ["Tallinn",      "EE", 2, 3, 5, 5, 6, 8, 6, 6, 7, "Digital-first, very easy to start a company, and basketball is popular, but the market is small (~460k people)."],
+  ["Vilnius",      "LT", 2, 2, 6, 4, 5,10, 2, 4, 8, "Basketball is the national religion, but the city is spread out and already full of clubs."],
+  // ---- Tier 3 ----
+  ["Vitoria-Gasteiz","ES",3, 3, 5, 6, 7,10, 3, 8, 7, "Baskonia's home, one of Europe's most basketball-mad cities. High incomes and cheap space, but small."],
+  ["Granada",      "ES", 3, 4, 5, 6, 7, 8, 6, 4, 8, "University city with Covirán Granada and very low costs."],
+  ["Limerick",     "IE", 3, 3,10, 6, 7, 6, 8, 6, 6, "Strong basketball tradition, very young population, much cheaper than Dublin."],
+  ["Le Mans",      "FR", 3, 5, 6, 6, 7, 8, 6, 5, 8, "Le Mans Sarthe Basket, affordable and family-heavy."],
+  ["Limoges",      "FR", 3, 3, 5, 6, 6, 9, 6, 4, 9, "CSP Limoges, a historic basketball city, and very cheap."],
+  ["Bamberg",      "DE", 3, 4, 5, 6, 7, 9, 5, 7, 7, "A small German basketball town (Brose Bamberg) with good incomes."],
+  ["Ulm",          "DE", 3, 3, 5, 6, 7, 9, 4, 8, 6, "ratiopharm Ulm's famous youth academy proves demand. Wealthy, but well served."],
+  ["Varese",       "IT", 3, 3, 4, 6, 7, 9, 5, 7, 7, "A historic Italian basketball city near Milan, at a fraction of the cost."],
+  ["Groningen",    "NL", 3, 4, 6, 6, 6, 7, 6, 7, 6, "Donar Groningen and a big student population. Cheapest Dutch option."],
+  ["Tartu",        "EE", 3, 4, 5, 6, 6, 8, 5, 5, 8, "University city with a strong basketball club and very low costs."],
+  // ---- Tier 1: too expensive for now ----
+  ["Paris",     "FR", 1,10, 7, 9, 7, 8, 5, 8, 3, "Very dense and young, and basketball is booming, but rents and wages are among Europe's highest."],
+  ["Barcelona", "ES", 1, 9, 5, 8, 7, 9, 3, 6, 5, "Strong basketball culture but intense competition and high rents."],
+  ["Athens",    "GR", 1, 9, 4, 8, 6, 9, 3, 4, 8, "Basketball-mad and cheap, but a huge, competitive metro."],
+  ["Madrid",    "ES", 1, 6, 5, 8, 8, 9, 3, 6, 6, "Large family suburbs, but a mature, crowded market with high rents."],
+  ["Amsterdam", "NL", 1, 6, 6, 7, 6, 5, 7, 9, 3, "High incomes, but very expensive and hall space is scarce."],
+  ["Berlin",    "DE", 1, 5, 5, 7, 7, 7, 6, 7, 6, "Growing interest after Germany's 2023 World Cup win, but a big, costly market."],
+  ["Munich",    "DE", 1, 5, 5, 7, 7, 6, 6, 9, 3, "Wealthy families, but very high costs."],
+  ["Milan",     "IT", 1, 7, 4, 7, 6, 7, 5, 7, 4, "Olimpia Milano tradition, but expensive with an older population."],
+  ["Warsaw",    "PL", 1, 4, 6, 6, 7, 6, 7, 5, 8, "Fast-growing, but rents are rising quickly."],
+  ["Lisbon",    "PT", 1, 6, 4, 6, 6, 5, 7, 5, 6, "Popular with expats, but rents have soared."],
 ];
 
 // ---------------------------------------------------------------------
@@ -338,7 +368,7 @@ const COUNTRIES = [
     programmes: ["Elevate Greece (startup registry)", "Hellenic Development Bank loans"],
     challenges: ["Slow public administration and permits", "Lower incomes", "Lots of established basketball clubs"],
     src: ["eurostat_lc", "taxfound", "est"] },
-  { code: "IE", name: "Ireland", city: "Dublin", labour: 44.2,
+  { code: "IE", name: "Ireland", city: "Cork / Limerick", labour: 44.2,
     entity: "LTD (private company)", time: "~5–10 working days (CRO, online)", setup: "~€50 online filing", capital: "None",
     tax: "12.5% on trading profit", s: { speed: 7, cost: 9, tax: 10, reg: 6, english: 10 },
     programmes: ["Local Enterprise Offices: grants, mentoring, start-your-own-business courses", "Enterprise Ireland", "Sports Capital & Equipment Programme (via a non-profit club)"],
@@ -473,6 +503,7 @@ const PARAMS = [
     ["Hire talented coaches and support staff", "Partner venues · Mission"],
     ["Start lean: a small warehouse with a court, office, small changing room, lockers and a big store room for all equipment", "Hub calculator: Lean start build, floor plan, store room"],
     ["Investor-grade view of the money needed, month by month", "Hub calculator: 24-month cash flow"],
+    ["Every number editable, saved, and linked numbers update", "✏️ edit fields in the calculator, timetable, kit lists, store room, sports, cities, countries, partners"],
   ]},
   { group: "Multi-use court & timetable", items: [
     ["Convert the court for other uses: badminton nets, yoga, dance, handball, pickleball", "Timetable"],
@@ -490,7 +521,9 @@ const PARAMS = [
   ]},
   { group: "Funding & location", items: [
     ["What EU funding is available, and how much", "EU funding"],
-    ["Top 5 EU cities and why, with the parameters used", "Best cities"],
+    ["Top 5 EU cities and why, with the parameters used (tier 2 & 3 cities only)", "Cities"],
+    ["Remove Dublin", "Cities (Cork and Limerick kept as cheaper Irish options)"],
+    ["Focus on tier 2 & 3 cities; tier 1 cities are too expensive, so they're listed last", "Cities ranking"],
     ["Parameters: population density, near schools, near residential areas", "Best cities"],
     ["Which countries/cities are easiest to start a business in", "Start a business"],
     ["Business support programmes in each country", "Start a business"],

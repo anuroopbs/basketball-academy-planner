@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=10">
+<link rel="stylesheet" href="assets/styles.css?v=11">
 </head>
 <body>
 
@@ -109,6 +109,8 @@
       <h2 style="margin-top:14px">Deal structures</h2><div class="ilist" id="dealTypes"></div>
       <div id="partnerSrc"></div></div>
   </div>
+  <details class="fold"><summary>✏️ Edit network cost assumptions <span class="hint">kit per venue, software, managers</span></summary>
+    <div class="fold-body" id="pnFixedEdit"></div></details>
 </section>
 
 <!-- ================= WHY BASKETBALL ================= -->
@@ -129,6 +131,8 @@
   <div class="callout" style="margin-top:14px"><div>⚖️</div><div><b>The honest picture.</b> Basketball wins on kids per coach and coach cost per kid.
     Squash fits a few more kids into the same space but needs one coach per court. Badminton and pickleball courts are cheaper to fit out, but they still need
     one coach each, and the basketball floor <b>hosts them off-peak anyway</b> (<a href="#timetable">Timetable</a>).</div></div>
+  <details class="fold"><summary>✏️ Edit sport assumptions <span class="hint">kids per coach, fit-out per court</span></summary>
+    <div class="fold-body" id="sportEdit"></div></details>
   <details class="fold"><summary>📋 Full comparison table <span class="hint">14 metrics × 5 sports</span></summary>
     <div class="fold-body"><div class="table-scroll"><table id="sportTable"></table></div></div></details>
   <details class="fold"><summary>✨ Six more reasons basketball fits a kids' academy <span class="hint">retention, schools, cost</span></summary>
@@ -172,11 +176,11 @@
           <div id="floorPlan"></div><div class="legend" id="roomLegend"></div></div>
         <div class="stack-gap">
           <details class="fold" open style="margin-top:0"><summary>🪶 Lean fit-out: what we buy <span class="hint">reuse the shell, buy smart</span></summary>
-            <div class="fold-body"><div class="table-scroll"><table><tbody id="leanList"></tbody></table></div>
+            <div class="fold-body"><div class="table-scroll"><table><tbody id="leanList"></tbody></table></div><div id="leanReset"></div>
               <p class="help">Lay sports tiles on the existing concrete instead of a €60k+ sprung wooden floor. Use adjustable or wall-mounted hoops,
                 prefab rooms and second-hand kit where possible. Negotiate a rent-free fit-out period with the landlord.</p></div></details>
           <details class="fold" style="margin-top:0"><summary>📦 What the store room holds <span class="hint">why it needs ~40 m²</span></summary>
-            <div class="fold-body"><div class="table-scroll"><table><thead><tr><th>Item</th><th class="l">Quantity</th><th>Floor space</th></tr></thead><tbody id="storeList"></tbody></table></div></div></details>
+            <div class="fold-body"><div class="table-scroll"><table><thead><tr><th>Item</th><th class="l">Quantity</th><th>Floor space</th></tr></thead><tbody id="storeList"></tbody></table></div><div id="storeReset"></div></div></details>
         </div>
       </div>
       <div class="cols-2" style="margin-top:14px">
@@ -227,12 +231,14 @@
         <div class="daybars" id="ttDays" style="margin-top:14px"></div></div>
     </div>
   </div>
+  <details class="fold" open><summary>✏️ Edit activity prices, attendance & costs <span class="hint">changes flow into the calculator</span></summary>
+    <div class="fold-body" id="actEdit"></div></details>
   <details class="fold"><summary>📋 Activity breakdown <span class="hint">hours, visits, revenue, cost</span></summary>
     <div class="fold-body"><div class="table-scroll"><table id="ttTable"></table></div>
       <p class="small muted">Activities marked <span class="tag in">In calculator</span> already have their own line in the Hub calculator. Everything else is added there as
         “Extra programmes & multi-use”, so nothing is counted twice.</p></div></details>
   <details class="fold"><summary>🧰 Conversion kit <span class="hint" id="kitHint"></span></summary>
-    <div class="fold-body"><div class="table-scroll"><table id="kitTable"></table></div>
+    <div class="fold-body"><div class="table-scroll"><table id="kitTable"></table></div><div id="kitReset"></div>
       <p class="small muted">Full handball (40 × 20 m) and futsal pitches are bigger than a basketball court (28 × 15 m), so those slots are for training and small-sided games only.</p>
       <div id="ttSrc"></div></div></details>
 </section>
@@ -253,13 +259,13 @@
 <!-- ================= CITIES ================= -->
 <section class="panel" id="p-cities">
   <div class="page-head"><div><div class="eyebrow">Market · demand</div><h1>Best cities in the EU</h1>
-    <p>13 cities scored on 8 demand factors. <b>Click a city</b> to see why it ranks where it does. Change the weights below.</p></div></div>
+    <p><b>Tier 2 & 3 cities first</b>, where rent and wages are lower. Tier 1 capitals are listed last as too expensive for now. <b>Click a city</b> for details, and <b>click any score</b> in the heatmap to edit it.</p></div></div>
   <div class="split-r">
     <div class="card"><div class="sec" style="margin-top:0"><h2>Ranking</h2><span class="sub">score / 100</span></div><div class="rank-list" id="cityRank"></div></div>
     <div class="card detail" id="cityDetail"></div>
   </div>
-  <div class="sec"><h2>Heatmap: every city × every factor</h2><span class="sub">darker = stronger (1–10)</span></div>
-  <div class="table-scroll"><table id="cityHeat"></table></div>
+  <div class="sec"><h2>Heatmap: every city × every factor</h2><span class="sub">darker = stronger · click a score to edit</span></div>
+  <div class="table-scroll"><table id="cityHeat"></table></div><div id="cityReset"></div>
   <details class="fold"><summary>⚖️ Change the weights <span class="hint">8 sliders</span></summary>
     <div class="fold-body"><div class="cols-4" id="weights"></div><button class="btn" id="resetWeights" style="margin-top:10px">Reset weights</button></div></details>
   <details class="fold"><summary>📍 Choosing the exact neighbourhood <span class="hint">6-point site checklist</span></summary>
@@ -279,12 +285,12 @@
   <div class="page-head"><div><div class="eyebrow">Market · supply</div><h1>Where is it easiest to start?</h1>
     <p>10 countries scored on registration speed and cost, tax, labour cost, the rules for paid youth sport, and working in English. <b>Click a country</b> for the setup facts, support programmes and challenges.</p></div></div>
   <div class="split-r">
-    <div class="card chart"><div class="sec" style="margin-top:0"><h2>Where to launch first</h2><span class="sub">ease × demand in the best city</span></div><div id="bizMatrix"></div></div>
+    <div class="card chart"><div class="sec" style="margin-top:0"><h2>Where to launch first</h2><span class="sub">ease × demand in the best tier 2/3 city</span></div><div id="bizMatrix"></div></div>
     <div class="card"><div class="sec" style="margin-top:0"><h2>Ease ranking</h2><span class="sub">score / 100</span></div><div class="rank-list" id="bizRank"></div></div>
   </div>
   <div class="card detail" id="bizDetail" style="margin-top:14px"></div>
-  <div class="sec"><h2>Heatmap: every country × every factor</h2><span class="sub">darker = easier (1–10)</span></div>
-  <div class="table-scroll"><table id="bizHeat"></table></div>
+  <div class="sec"><h2>Heatmap: every country × every factor</h2><span class="sub">darker = easier · click a score or €/hour to edit</span></div>
+  <div class="table-scroll"><table id="bizHeat"></table></div><div id="bizReset"></div>
   <details class="fold"><summary>⚖️ Change the weights <span class="hint">6 sliders</span></summary>
     <div class="fold-body"><div class="cols-3" id="bizWeights"></div><button class="btn" id="bizResetWeights" style="margin-top:10px">Reset weights</button></div></details>
   <div class="callout info" style="margin-top:10px"><div>ℹ️</div><div>The World Bank's “Doing Business” ranking ended in 2021. Its replacement (B-READY) doesn't cover most EU countries yet, so these scores
@@ -337,9 +343,9 @@
   </aside>
 </div>
 
-<script src="assets/data.js?v=10"></script>
-<script src="assets/app.js?v=10"></script>
+<script src="assets/data.js?v=11"></script>
+<script src="assets/app.js?v=11"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js"></script>
-<script src="assets/cloud.js?v=10"></script>
+<script src="assets/cloud.js?v=11"></script>
 </body>
 </html>
