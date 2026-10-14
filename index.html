@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Basketball Academy Planner</title>
-<meta name="description" content="Plan a youth basketball academy (ages 8–18) in Europe: investment, area, occupancy, revenue, EU funding and the best cities.">
+<meta name="description" content="Plan a youth basketball academy network (ages 8–18) across Europe: warehouse hub, multi-use timetable, partner venues, investment, EU funding, best cities and ease of starting a business.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏀</text></svg>">
 <link rel="stylesheet" href="assets/styles.css">
 </head>
@@ -12,118 +12,386 @@
 
 <div class="top">
   <div class="top-inner">
-    <div class="brand">🏀 Basketball Academy Planner</div>
-    <nav class="tabs" role="tablist">
-      <button class="tab" role="tab" data-tab="about">About</button>
-      <button class="tab" role="tab" data-tab="calc">Calculator</button>
-      <button class="tab" role="tab" data-tab="deck">Deck</button>
-      <button class="tab" role="tab" data-tab="why">Why basketball</button>
-      <button class="tab" role="tab" data-tab="revenue">Revenue streams</button>
-      <button class="tab" role="tab" data-tab="funding">EU funding</button>
-      <button class="tab" role="tab" data-tab="cities">Best cities</button>
-      <button class="tab" role="tab" data-tab="params">Parameters</button>
+    <div class="brand"><span>🏀 Basketball Academy Planner</span><small id="checked"></small></div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <div class="tab-group"><div class="tab-group-label">Strategy</div><div class="tab-row">
+        <button class="tab" role="tab" data-tab="mission">Mission</button>
+        <button class="tab" role="tab" data-tab="partners">Partner venues</button>
+        <button class="tab" role="tab" data-tab="why">Why basketball</button>
+      </div></div>
+      <div class="tab-group"><div class="tab-group-label">Numbers</div><div class="tab-row">
+        <button class="tab" role="tab" data-tab="calc">Hub calculator</button>
+        <button class="tab" role="tab" data-tab="timetable">Timetable</button>
+        <button class="tab" role="tab" data-tab="revenue">Revenue streams</button>
+      </div></div>
+      <div class="tab-group"><div class="tab-group-label">Market</div><div class="tab-row">
+        <button class="tab" role="tab" data-tab="cities">Best cities</button>
+        <button class="tab" role="tab" data-tab="business">Start a business</button>
+        <button class="tab" role="tab" data-tab="funding">EU funding</button>
+      </div></div>
+      <div class="tab-group"><div class="tab-group-label">Pitch</div><div class="tab-row">
+        <button class="tab" role="tab" data-tab="deck">Deck</button>
+        <button class="tab" role="tab" data-tab="params">Parameters</button>
+      </div></div>
     </nav>
   </div>
 </div>
 
 <div class="wrap">
 
-<!-- ================= ABOUT ================= -->
-<section class="panel" id="p-about">
-  <h1>Youth basketball academies across Europe</h1>
-  <p class="lead">Basketball academies for kids aged <b>8–18</b>, in dense family neighbourhoods near schools, so getting
-    to training after school is a short walk or bus ride. Each academy also has a <b>CrossFit-style fitness zone</b>
-    (rigs, barbells, dumbbells, rowers, bikes) for parents, adults and teen athletes. Adult sessions, pickup games
-    and camps fill the court hours the kids aren't using.</p>
+<!-- ================= MISSION ================= -->
+<section class="panel" id="p-mission">
+  <div class="hero-band">
+    <div class="kicker">Our mission</div>
+    <h1>Get every kid in Europe playing by turning empty courts, school halls and community spaces into busy youth-sport hubs.</h1>
+    <p class="lead">We start with one warehouse academy and use it to train coaches. Those coaches then run programmes in the
+      schools, community centres and halls already in each neighbourhood, with our software, investment and programmes,
+      on a profit-sharing basis. Then we repeat the model city by city across Europe.</p>
+  </div>
 
   <h2>At a glance</h2>
-  <div class="grid" id="aboutCards"></div>
+  <div class="grid" id="missionCards"></div>
 
-  <h2>The plan</h2>
+  <h2>The strategy: hub first, then partner venues</h2>
   <div class="grid-2">
-    <div class="box"><h3>🎯 Who it's for</h3><p class="muted small">Kids aged 8–18 in age groups (8–11 fundamentals, 12–14
-      development, 15–18 competitive). Adults use the court and fitness zone in the evenings and at weekends.</p></div>
-    <div class="box"><h3>🏀 Why basketball</h3><p class="muted small">One court and one coach can run 20–40 kids at once,
-      far more per coach than racket sports. See <a href="#why">Why basketball</a>.</p></div>
-    <div class="box"><h3>📍 Where it goes</h3><p class="muted small">Dense residential areas within walking distance of several
-      schools. See <a href="#cities">Best cities</a>.</p></div>
-    <div class="box"><h3>💶 How it makes money</h3><p class="muted small">Kids coaching is the core income. Fitness memberships,
-      camps, adult training, pickup games, court rental, parties and sponsors add to it.
-      See <a href="#revenue">Revenue streams</a>.</p></div>
-    <div class="box"><h3>🇪🇺 How it's funded</h3><p class="muted small">Founder capital, plus EU (Erasmus+ Sport) and
-      national sport grants through a non-profit club partner. See <a href="#funding">EU funding</a>.</p></div>
-    <div class="box"><h3>📊 Pitch it</h3><p class="muted small">A slide deck built from the live numbers.
-      See <a href="#deck">Deck</a>.</p></div>
+    <div class="box"><h3>1 · Why a warehouse hub first?</h3>
+      <p class="muted small">A place of our own gives us a court to <b>train coaches</b> on, a <b>showcase</b> to show schools and councils,
+        a home for the <b>elite squads</b>, and a <b>multi-use timetable</b> that earns money all day. Coaches come to us because we
+        have a court. Once the hub is running, recruiting and training coaches gets much easier.</p></div>
+    <div class="box"><h3>2 · Why partner venues next?</h3>
+      <p class="muted small">Europe is full of school halls, community centres and courts that sit empty most of the week. We bring
+        coaches, programmes and software, and the venue brings the space. Each new site costs <b>~€4k instead of ~€360k</b>,
+        and it sits right next to the kids. See <a href="#partners">Partner venues</a>.</p></div>
+    <div class="box"><h3>3 · Why basketball?</h3>
+      <p class="muted small">One court and one coach can run 20–40 kids, far more per coach than any racket sport. The same floor
+        also converts to badminton, pickleball, yoga, dance and seniors' sessions. See <a href="#why">Why basketball</a> and
+        <a href="#timetable">Timetable</a>.</p></div>
+    <div class="box"><h3>4 · Why Europe?</h3>
+      <p class="muted small">Basketball is growing fast, indoor space is scarce, and the EU funds youth sport (Erasmus+ Sport up to €400k
+        per project). See <a href="#cities">Best cities</a>, <a href="#business">Start a business</a> and <a href="#funding">EU funding</a>.</p></div>
   </div>
+
+  <h2>The flywheel</h2>
+  <div class="box flywheel" id="flywheel"></div>
+
+  <h2>Roadmap</h2>
+  <div class="roadmap" id="roadmap"></div>
+
+  <details class="fold">
+    <summary>🧠 Expert review: what to validate before investing <span class="hint">click to expand</span></summary>
+    <div class="fold-body">
+      <div class="grid-2">
+        <div class="box"><h3>1. Test demand before signing a lease</h3><p class="muted small">Run 8–12 weeks of paid sessions in hired
+          school halls first. Measure sign-ups, attendance and churn. This turns the calculator's occupancy guess into real data.</p></div>
+        <div class="box"><h3>2. Find the building first</h3><p class="muted small">Rent per m² and a clear height of 7 m+ decide whether the
+          hub works at all. Get 3 real warehouse quotes and put them into the Calculator.</p></div>
+        <div class="box"><h3>3. Lock in coaches early</h3><p class="muted small">Coaches are the product. Check local qualification rules
+          (France needs a state diploma plus a professional card; Ireland needs Garda vetting) before choosing a country.</p></div>
+        <div class="box"><h3>4. Sign one partner school early</h3><p class="muted small">A letter of intent from one school or council
+          proves the partner-venue model to investors and grant bodies.</p></div>
+        <div class="box"><h3>5. Set up the non-profit arm</h3><p class="muted small">Most grants require a non-profit club. Register it
+          alongside the company so you're ready for the 2027 Erasmus+ round.</p></div>
+        <div class="box"><h3>6. Biggest risks</h3><p class="muted small">Low occupancy in year 1; rent; coach turnover; one partner
+          venue cancelling; safeguarding incidents. Each has a mitigation: pilot first, profit-share deals, a coach academy,
+          a diversified venue base, strict vetting.</p></div>
+      </div>
+    </div>
+  </details>
+</section>
+
+<!-- ================= PARTNER VENUES ================= -->
+<section class="panel" id="p-partners">
+  <h1>Partner venues: the asset-light network</h1>
+  <p class="lead">We turn underused spaces such as vacant or after-hours schools, community centres, colleges, public courts, pools and
+    table-tennis halls into active youth-sport venues. <b>We bring</b> coaches, programmes, software, equipment and marketing.
+    <b>The venue brings</b> the space. We share the profit. It starts once the hub is running and training coaches.</p>
+
+  <h2>Spaces we activate</h2>
+  <div class="grid-3" id="venueTypes"></div>
+
+  <h2>Who brings what</h2>
+  <div class="grid-2">
+    <div class="box"><h3>We bring</h3><div class="grid-3" id="weBring" style="margin-top:10px"></div></div>
+    <div class="box"><h3>The venue brings</h3><div id="venueBrings" style="margin-top:10px;display:grid;gap:12px"></div>
+      <div class="note good small">For the venue: new income, a busy and safe building, community impact to report, and no
+        staffing or programme work.</div></div>
+  </div>
+
+  <h2>Deal structures</h2>
+  <div class="grid-3" id="dealTypes"></div>
+
+  <h2>Network calculator</h2>
+  <p class="muted small">Move the levers to size the partner network. Revenue share and coach pay are the main levers.</p>
+  <div class="levers" id="partnerLevers"></div>
+  <div class="grid" id="partnerCards"></div>
+  <details class="src"><summary>ⓘ Sources</summary><ul><li>Planner estimates for prices, coach pay and setup cost per venue. All of them can be changed with the levers above.</li></ul></details>
+
+  <h2>Hub vs partner network</h2>
+  <div class="table-scroll"><table id="hubVsNet"></table></div>
+  <p class="small muted mt">The hub and the network work together: the hub trains the coaches and builds the reputation, and the
+    network brings scale at low cost.</p>
+</section>
+
+<!-- ================= WHY BASKETBALL ================= -->
+<section class="panel" id="p-why">
+  <h1>Why basketball?</h1>
+  <p class="lead">Give five sports the same floor space and compare them. Basketball serves the most kids per coach, and coaches are
+    an academy's biggest ongoing cost. One court and one coach can run <b>20–40 kids</b>.</p>
+  <div class="levers">
+    <div class="lever main">
+      <div class="lever-top"><span class="lever-label">Floor space available</span><span class="lever-value" id="whyAreaV"></span></div>
+      <input type="range" id="whyArea" min="608" max="2500" step="10" aria-label="Floor space available">
+      <div class="small muted">608 m² = the space one basketball court needs (32 × 19 m including run-off)</div>
+    </div>
+    <div class="lever">
+      <div class="lever-top"><span class="lever-label">Coach cost per hour</span><span class="lever-value" id="whyCoachV"></span></div>
+      <input type="range" id="whyCoach" min="15" max="80" step="1" aria-label="Coach cost per hour">
+    </div>
+  </div>
+
+  <h2>Same space, five sports (drawn to scale)</h2>
+  <p class="small muted">Each panel is the same floor space, with as many courts as physically fit. Dots = kids in one coaching session,
+    white squares = coaches.</p>
+  <div class="sport-grid" id="sportPanels"></div>
+
+  <h2>Head-to-head</h2>
+  <div class="grid-2" id="sportCharts"></div>
+
+  <details class="fold">
+    <summary>📋 Full comparison table <span class="hint">14 metrics × 5 sports</span></summary>
+    <div class="fold-body"><div class="table-scroll"><table id="sportTable"></table></div></div>
+  </details>
+
+  <div class="note"><b>The honest picture.</b> Basketball wins clearly on <b>kids per coach</b> and <b>coach cost per kid</b>, and
+    staff costs come every month while a fit-out is paid once. Squash fits a few more kids into the same space but needs one
+    coach per court. Badminton and pickleball courts are cheaper to fit out, but every court still needs its own coach.
+    The basketball floor can also <b>host</b> badminton and pickleball off-peak (see <a href="#timetable">Timetable</a>), so it
+    gets their income too.</div>
+
+  <h2>Other reasons basketball fits a kids' academy</h2>
+  <div class="grid-3">
+    <div class="box"><h3>👥 Team sport = kids stay</h3><p class="muted small">Kids come back for their friends and their team.</p></div>
+    <div class="box"><h3>🏫 Schools already play it</h3><p class="muted small">It's part of PE across Europe, which makes recruiting and partnerships easier.</p></div>
+    <div class="box"><h3>🎒 Cheap for families</h3><p class="muted small">Just trainers and a ball. No racket and no court booking.</p></div>
+    <div class="box"><h3>🔁 One floor, many uses</h3><p class="muted small">The same floor hosts camps, 3×3, badminton, pickleball, yoga, dance and futsal.</p></div>
+    <div class="box"><h3>📈 Growing in Europe</h3><p class="muted small">3×3 is an Olympic sport, Europe has NBA stars, and a European NBA league is planned.</p></div>
+    <div class="box"><h3>⚖️ Boys and girls together</h3><p class="muted small">Plenty of grants are aimed at getting girls into sport.</p></div>
+  </div>
+  <details class="src"><summary>ⓘ Sources</summary><ul id="whySources"></ul></details>
 </section>
 
 <!-- ================= CALCULATOR ================= -->
 <section class="panel" id="p-calc">
-  <h1>Academy calculator</h1>
-  <p class="lead">One academy = a basketball court + a fitness zone + support space (changing rooms, reception, storage).
-    Move any lever and every card updates. Levers apply to each academy unless they say otherwise. All detailed costs
-    can be edited at the bottom.</p>
+  <h1>Hub calculator</h1>
+  <p class="lead">One hub = a basketball court + a fitness zone + support space (changing rooms, reception, storage). Move any lever and
+    every card updates. Levers apply to each hub unless they say otherwise. Kids training slots come from the <a href="#timetable">Timetable</a>.</p>
 
-  <div class="card-group-title">Levers: academy & court</div>
+  <div class="presets"><span class="small muted">Scenario:</span>
+    <button class="btn" data-preset="conservative">🐢 Conservative</button>
+    <button class="btn" data-preset="base">⚖️ Base</button>
+    <button class="btn" data-preset="optimistic">🚀 Optimistic</button>
+  </div>
+
+  <div class="card-group-title">Levers: hub & court</div>
   <div class="levers" id="leversCourt"></div>
   <div class="card-group-title">Levers: fitness zone, adults & funding</div>
   <div class="levers" id="leversOther"></div>
 
+  <div class="card-group-title">Money needed</div>
+  <div class="grid" id="cardsMoney"></div>
+  <div class="card-group-title">Monthly profit & loss</div>
+  <div class="grid" id="cardsPL"></div>
+
+  <div class="section-head"><h2>Profit vs occupancy</h2><span class="small muted">How sensitive the business is to filling the court</span></div>
+  <div class="chart-box" id="occChart"></div>
+
   <div class="card-group-title">Space</div>
   <div class="grid" id="cardsSpace"></div>
   <div class="box mt">
-    <div class="small muted">Floor area of one academy</div>
+    <div class="small muted">Floor area of one hub</div>
     <div class="areabar" id="areaBar"></div>
     <div class="legend" id="areaLegend"></div>
   </div>
-
-  <div class="card-group-title">Money needed</div>
-  <div class="grid" id="cardsMoney"></div>
   <div class="card-group-title">Students & occupancy</div>
   <div class="grid" id="cardsStudents"></div>
-  <div class="card-group-title">Monthly profit & loss</div>
-  <div class="grid" id="cardsPL"></div>
   <div class="card-group-title">Unit economics</div>
   <div class="grid" id="cardsUnit"></div>
+  <details class="src"><summary>ⓘ Sources</summary><ul id="calcSources"></ul></details>
 
-  <h2>Monthly revenue by stream</h2>
-  <div class="table-scroll"><table>
-    <thead><tr><th>Stream</th><th>Per academy / month</th><th class="thAll">All academies</th><th>Share</th></tr></thead>
-    <tbody id="revTable"></tbody>
-  </table></div>
-
-  <h2>Monthly running costs</h2>
-  <div class="table-scroll"><table>
-    <thead><tr><th>Cost</th><th>Per academy / month</th><th class="thAll">All academies</th><th>Share</th></tr></thead>
-    <tbody id="costTable"></tbody>
-  </table></div>
-
-  <h2>Investment breakdown</h2>
-  <div class="table-scroll"><table>
-    <thead><tr><th>Item</th><th>Per academy</th><th class="thAll">All academies</th></tr></thead>
-    <tbody id="invTable"></tbody>
-  </table></div>
-
-  <h2>Fitness zone kit (CrossFit-style circuit training)</h2>
-  <div class="table-scroll"><table>
-    <thead><tr><th>Equipment</th><th>Typical cost</th></tr></thead>
-    <tbody id="gymKit"></tbody>
-  </table></div>
-  <p class="small muted">Using the name “CrossFit” requires a paid CrossFit affiliate licence. Without one, call it
-    “functional fitness” or “circuit training”. The equipment is the same.</p>
-
-  <details>
-    <summary>⚙️ Edit detailed assumptions (per academy)</summary>
-    <div class="groups" id="groups"></div>
-    <button class="btn mt" id="reset">Reset everything to defaults</button>
+  <details class="fold">
+    <summary>💶 Monthly revenue by stream <span class="hint" id="revHint"></span></summary>
+    <div class="fold-body"><div class="table-scroll"><table>
+      <thead><tr><th>Stream</th><th>Per hub / month</th><th class="thAll">All hubs</th><th>Share</th></tr></thead>
+      <tbody id="revTable"></tbody></table></div></div>
   </details>
+  <details class="fold">
+    <summary>🧾 Monthly running costs <span class="hint" id="costHint"></span></summary>
+    <div class="fold-body"><div class="table-scroll"><table>
+      <thead><tr><th>Cost</th><th>Per hub / month</th><th class="thAll">All hubs</th><th>Share</th></tr></thead>
+      <tbody id="costTable"></tbody></table></div></div>
+  </details>
+  <details class="fold">
+    <summary>🏗️ Investment breakdown <span class="hint" id="invHint"></span></summary>
+    <div class="fold-body"><div class="table-scroll"><table>
+      <thead><tr><th>Item</th><th>Per hub</th><th class="thAll">All hubs</th></tr></thead>
+      <tbody id="invTable"></tbody></table></div></div>
+  </details>
+  <details class="fold">
+    <summary>🏋️ Fitness zone kit (CrossFit-style circuit training) <span class="hint">8 items</span></summary>
+    <div class="fold-body">
+      <div class="table-scroll"><table><thead><tr><th>Equipment</th><th>Typical cost</th></tr></thead><tbody id="gymKit"></tbody></table></div>
+      <p class="small muted">Using the name “CrossFit” requires a paid affiliate licence. Without one, call it “functional fitness” or
+        “circuit training”. The equipment is the same.</p>
+      <details class="src"><summary>ⓘ Sources</summary><ul><li><a href="https://www.crossfit.com/affiliate" target="_blank" rel="noopener">CrossFit affiliate licence</a></li><li>Equipment prices: planner estimates</li></ul></details>
+    </div>
+  </details>
+  <details class="fold">
+    <summary>⚙️ Edit detailed assumptions <span class="hint">rent, staff, setup, prices</span></summary>
+    <div class="fold-body">
+      <div class="groups" id="groups"></div>
+      <button class="btn mt" id="reset">Reset everything to defaults</button>
+    </div>
+  </details>
+</section>
+
+<!-- ================= TIMETABLE ================= -->
+<section class="panel" id="p-timetable">
+  <h1>Timetable: one court, used all day</h1>
+  <p class="lead">The basketball court converts in minutes: portable nets turn it into 3 badminton or 3 pickleball courts, mats turn it into
+    a yoga studio, and dance academies rent the sprung floor. The kids academy keeps the prime after-school hours, and everything else
+    fills the hours that would otherwise sit empty.</p>
+
+  <h2>This week's utilisation</h2>
+  <div class="grid" id="ttCards"></div>
+
+  <div class="section-head"><h2>Weekly timetable</h2><span class="small muted">Pick an activity, then tap any slot to change it</span></div>
+  <div class="palette" id="palette"></div>
+  <div class="levers" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
+    <div class="lever">
+      <div class="lever-top"><span class="lever-label">Attendance & booking rate</span><span class="lever-value" id="fillV"></span></div>
+      <input type="range" id="fill" min="30" max="100" step="5" aria-label="Attendance vs target">
+      <div class="small muted">How full pay-per-person sessions are, and how often whole-court hire slots actually get booked. This is the biggest unknown until you run a pilot.</div>
+    </div>
+  </div>
+  <div class="tt-scroll"><table class="tt" id="tt"></table></div>
+  <div class="presets"><button class="btn" id="ttReset">Reset to the suggested timetable</button>
+    <button class="btn" id="ttClear">Clear everything except the academy</button></div>
+
+  <h2>Business view</h2>
+  <div class="grid-2">
+    <div class="chart-box"><h3>Revenue per hour, by activity</h3><div class="small muted">Which uses of the court earn the most per hour</div><div id="ttPerHour"></div></div>
+    <div class="chart-box"><h3>How the week's hours are used</h3><div class="small muted">Hours per week by category</div>
+      <div class="stack mt" id="ttMix"></div><div class="legend" id="ttMixLegend"></div>
+      <h3 class="mt">Hours used per day</h3><div class="daybars" id="ttDays"></div></div>
+  </div>
+
+  <details class="fold">
+    <summary>📋 Activity breakdown <span class="hint">hours, people, revenue, cost</span></summary>
+    <div class="fold-body"><div class="table-scroll"><table id="ttTable"></table></div>
+      <p class="small muted">Revenue from <span class="tag in">In calculator</span> activities (academy, adults, pickup, parties) is already
+        counted in the Hub calculator. Only the other activities are added there as <b>“Extra programmes & multi-use”</b>, so nothing is
+        counted twice.</p></div>
+  </details>
+  <details class="fold">
+    <summary>🧰 Conversion kit: what it takes to switch uses <span class="hint" id="kitHint"></span></summary>
+    <div class="fold-body"><div class="table-scroll"><table id="kitTable"></table></div>
+      <p class="small muted">Included in the Hub calculator's investment. A full handball court (40 × 20 m) and futsal pitch are larger than a
+        basketball court (28 × 15 m), so those slots are for training and small-sided games, not official matches.</p>
+      <details class="src"><summary>ⓘ Sources</summary><ul id="ttSources"></ul></details></div>
+  </details>
+</section>
+
+<!-- ================= REVENUE ================= -->
+<section class="panel" id="p-revenue">
+  <h1>Revenue streams</h1>
+  <p class="lead">Every way the hub and the network can earn money. Streams marked <span class="tag in">In calculator</span> are already counted
+    in the Hub calculator. Prices are typical Western European ranges (planner estimates).</p>
+  <div id="streams"></div>
+</section>
+
+<!-- ================= CITIES ================= -->
+<section class="panel" id="p-cities">
+  <h1>Best cities in the EU</h1>
+  <p class="lead">13 EU cities scored on 8 demand factors. Use the sliders to change what matters most, and the ranking updates.
+    Combine this with <a href="#business">Start a business</a> to see where to launch first.</p>
+  <h2>Top 5</h2>
+  <div class="grid-2" id="top5"></div>
+  <details class="fold">
+    <summary>⚖️ Scoring factors & weights <span class="hint">8 sliders</span></summary>
+    <div class="fold-body">
+      <p class="muted small">Each city gets a 1–10 score on every factor. The final score is a weighted average out of 100.</p>
+      <div class="levers" id="weights"></div>
+      <button class="btn" id="resetWeights">Reset weights</button>
+    </div>
+  </details>
+  <details class="fold">
+    <summary>📋 All cities <span class="hint">13 cities × 8 factors</span></summary>
+    <div class="fold-body"><div class="table-scroll"><table><thead id="cityHead"></thead><tbody id="cityBody"></tbody></table></div></div>
+  </details>
+  <details class="fold">
+    <summary>📍 Choosing the exact neighbourhood <span class="hint">site checklist</span></summary>
+    <div class="fold-body"><div class="grid-2">
+      <div class="box"><h3>🏫 Near schools</h3><p class="muted small">3+ schools within 1 km (a 10–15 min walk). Kids come straight from school,
+        and the schools become your partner venues.</p></div>
+      <div class="box"><h3>🏘️ In residential areas</h3><p class="muted small">Dense family housing; check census data for households with children.</p></div>
+      <div class="box"><h3>🚌 Easy to reach</h3><p class="muted small">Public transport within 5 minutes, safe cycling routes, and a drop-off area.</p></div>
+      <div class="box"><h3>📐 The building</h3><p class="muted small">7 m+ clear height, ~1,000 m² of floor. Light-industrial units are usually cheapest.</p></div>
+      <div class="box"><h3>⚔️ Competition</h3><p class="muted small">Map clubs within 3 km. Waiting lists mean demand isn't being met.</p></div>
+      <div class="box"><h3>💶 Ability to pay</h3><p class="muted small">Mid-level incomes, plus grant-funded free places in low-income areas.</p></div>
+    </div></div>
+  </details>
+  <details class="src"><summary>ⓘ Sources</summary><ul id="citySources"></ul></details>
+</section>
+
+<!-- ================= START A BUSINESS ================= -->
+<section class="panel" id="p-business">
+  <h1>Where is it easiest to start the business?</h1>
+  <p class="lead">10 EU countries compared on how fast and cheap it is to set up a company, tax, labour cost, the rules for running paid youth
+    sport, and working in English. The matrix combines this with each country's best city from <a href="#cities">Best cities</a> to show where to launch first.</p>
+
+  <div class="note info small">The World Bank stopped its “Doing Business” ranking in 2021 and replaced it with B-READY, which doesn't yet cover most
+    EU countries. So these scores are built from official sources: Eurostat labour costs, Tax Foundation tax rates and national registry
+    rules. Each country card shows its sources.</div>
+
+  <h2>Easiest 5</h2>
+  <div class="grid-2" id="bizTop"></div>
+
+  <div class="section-head"><h2>Where to launch first</h2><span class="small muted">Ease of doing business × demand in the country's best city</span></div>
+  <div class="matrix-wrap" id="bizMatrix"></div>
+
+  <details class="fold">
+    <summary>⚖️ Scoring factors & weights <span class="hint">6 sliders</span></summary>
+    <div class="fold-body"><div class="levers" id="bizWeights"></div><button class="btn" id="bizResetWeights">Reset weights</button></div>
+  </details>
+  <details class="fold">
+    <summary>📋 All countries: setup facts, programmes and challenges <span class="hint">10 countries</span></summary>
+    <div class="fold-body"><div class="grid-2" id="bizAll"></div></div>
+  </details>
+  <details class="fold">
+    <summary>📊 Comparison table <span class="hint">scores and labour cost</span></summary>
+    <div class="fold-body"><div class="table-scroll"><table id="bizTable"></table></div></div>
+  </details>
+  <details class="src"><summary>ⓘ Sources</summary><ul id="bizSources"></ul></details>
+</section>
+
+<!-- ================= FUNDING ================= -->
+<section class="panel" id="p-funding">
+  <h1>EU funding</h1>
+  <p class="lead">Grants and finance available to a youth basketball academy in the EU, with amounts.</p>
+  <div class="note"><b>Read this first.</b> Most EU and national sport grants go to <b>non-profit</b> organisations and pay for <b>projects</b>,
+    not day-to-day running costs. Set up a company to run the academy and a registered non-profit club to apply for grants. Erasmus+ also
+    needs <b>partners in other countries</b>, which suits a Europe-wide network.</div>
+  <div class="note"><b>Timing.</b> The 2026 Erasmus+ Sport deadline (5 March 2026) has passed. Plan for the 2027 round.</div>
+  <h2>Total funding potential</h2>
+  <div class="grid" id="fundCards"></div>
+  <h2>Programmes</h2>
+  <div class="grid-2" id="funds"></div>
 </section>
 
 <!-- ================= DECK ================= -->
 <section class="panel" id="p-deck">
   <h1>Pitch deck</h1>
-  <p class="lead">Built from the live numbers in the Calculator, so changing a lever there changes the deck too. Use the
-    arrow keys or the buttons to move between slides.</p>
+  <p class="lead">Built from the live numbers on every other tab. Use the arrow keys or the buttons to move between slides.</p>
   <div class="deck-bar">
     <button class="btn" id="prevSlide">← Previous</button>
     <span class="deck-count" id="slideCount"></span>
@@ -134,144 +402,19 @@
   <div class="dots" id="dots"></div>
 </section>
 
-<!-- ================= WHY BASKETBALL ================= -->
-<section class="panel" id="p-why">
-  <h1>Why basketball?</h1>
-  <p class="lead">Give five sports the same floor space and compare them. Basketball serves the most kids per
-    coach, and coaches are an academy's biggest ongoing cost. One court and one coach can run a session for
-    <b>20–40 kids</b>.</p>
-
-  <div class="levers">
-    <div class="lever main">
-      <div class="lever-top"><span class="lever-label">Floor space available</span><span class="lever-value" id="whyAreaV"></span></div>
-      <input type="range" id="whyArea" min="300" max="2500" step="10" aria-label="Floor space available">
-      <div class="small muted">Default 608 m² = the space one basketball court needs (32 × 19 m including run-off)</div>
-    </div>
-    <div class="lever">
-      <div class="lever-top"><span class="lever-label">Coach cost per hour</span><span class="lever-value" id="whyCoachV"></span></div>
-      <input type="range" id="whyCoach" min="15" max="80" step="1" aria-label="Coach cost per hour">
-    </div>
-  </div>
-
-  <h2>Same space, five sports (drawn to scale)</h2>
-  <p class="small muted">Each panel shows the same floor space with as many courts as physically fit. Dots = students
-    in one coaching session, white squares = coaches.</p>
-  <div class="sport-grid" id="sportPanels"></div>
-
-  <h2>Head-to-head</h2>
-  <div class="grid-2" id="sportCharts"></div>
-
-  <h2>Full comparison</h2>
-  <div class="table-scroll"><table id="sportTable"></table></div>
-
-  <div class="note"><b>The honest picture.</b> Basketball wins clearly on <b>kids per coach</b> and
-    <b>coach cost per kid</b>. Staff costs never stop, while a fit-out is paid once. Squash fits slightly more kids into the
-    same floor space, but it needs one coach per court, so 5–6× the coaches. Badminton and pickleball courts are cheaper
-    to fit out, but every court still needs its own coach, and badminton needs a 9 m ceiling. Padel uses the most space
-    per player of all five.</div>
-
-  <h2>Other reasons basketball fits a kids' academy</h2>
-  <div class="grid-2">
-    <div class="box"><h3>👥 Team sport = kids stay</h3><p class="muted small">Kids come back for their friends and their team.
-      Retention is usually higher than in individual sports.</p></div>
-    <div class="box"><h3>🏫 Schools already play it</h3><p class="muted small">Basketball is taught in PE across Europe. That
-      makes school partnerships and recruitment easier.</p></div>
-    <div class="box"><h3>🎒 Cheap to start for families</h3><p class="muted small">Just trainers and a ball. No racket, no
-      court booking, so it's easier for parents to say yes.</p></div>
-    <div class="box"><h3>🔁 One court, many uses</h3><p class="muted small">The same floor hosts camps, 3×3, pickup games,
-      adult leagues, events, and other sports (futsal, volleyball) in quiet hours.</p></div>
-    <div class="box"><h3>📈 Growing in Europe</h3><p class="muted small">3×3 is an Olympic sport, Europe has NBA stars
-      (Wembanyama, Jokić, Dončić, Antetokounmpo), and the NBA is planning a European league.</p></div>
-    <div class="box"><h3>⚖️ Boys and girls together</h3><p class="muted small">Works for both, with plenty of grants for
-      girls' participation.</p></div>
-  </div>
-  <p class="small muted">Court sizes are official dimensions. The space each court needs (footprint) includes safety
-    run-off. Fit-out costs are rough estimates for one indoor court inside an already-rented building, not including the
-    building itself. Get local quotes before relying on them.</p>
-</section>
-
-<!-- ================= REVENUE ================= -->
-<section class="panel" id="p-revenue">
-  <h1>Revenue streams</h1>
-  <p class="lead">Every way an academy can earn money. Kids coaching is the core. The rest fills court and gym hours
-    that would otherwise sit empty. Streams marked <span class="tag in">In calculator</span> are already counted in the
-    calculator. Prices are typical Western European ranges.</p>
-  <div id="streams"></div>
-</section>
-
-<!-- ================= FUNDING ================= -->
-<section class="panel" id="p-funding">
-  <h1>EU funding</h1>
-  <p class="lead">Grants and finance available to a youth basketball academy in the EU, with amounts. Checked 14 October 2026.</p>
-  <div class="note"><b>Read this first.</b> Most EU and national sport grants go to <b>non-profit</b> organisations and pay for
-    <b>projects</b> (a programme, an event, a coach exchange), not day-to-day running costs. The usual setup is a company
-    that runs the academy plus a registered non-profit club or association that applies for grants. Erasmus+ also requires
-    <b>partner organisations in other countries</b>, which suits a multi-city academy.</div>
-  <div class="note"><b>Timing.</b> The 2026 Erasmus+ Sport deadline was <b>5 March 2026</b> and has passed. Plan for the
-    2027 round, which is normally announced in autumn with an early-spring deadline.</div>
-
-  <h2>Total funding potential</h2>
-  <div class="grid" id="fundCards"></div>
-  <h2>Programmes</h2>
-  <div class="grid-2" id="funds"></div>
-  <h2>Sources</h2>
-  <ul class="small muted" id="fundSources"></ul>
-  <p class="small muted">Amounts for ERDF, ESF+, InvestEU and national schemes depend on each country's or region's own calls.
-    Check them with the local managing authority or sport agency.</p>
-</section>
-
-<!-- ================= CITIES ================= -->
-<section class="panel" id="p-cities">
-  <h1>Best cities in the EU</h1>
-  <p class="lead">12 EU cities, each scored on 8 factors. Use the sliders below to change how much each factor matters,
-    and the ranking updates.</p>
-
-  <h2>Top 5</h2>
-  <div class="grid-2" id="top5"></div>
-
-  <h2>Scoring factors & weights</h2>
-  <p class="muted small">Each city gets a score from 1 to 10 on every factor. The final score is a weighted average out of 100.
-    The default weights favour what matters most for a kids' academy: lots of families and schools close together.</p>
-  <div class="levers" id="weights"></div>
-  <button class="btn" id="resetWeights">Reset weights</button>
-
-  <h2>All cities</h2>
-  <div class="table-scroll"><table><thead id="cityHead"></thead><tbody id="cityBody"></tbody></table></div>
-
-  <h2>Choosing the exact location inside a city</h2>
-  <div class="note">The city score only tells you where to start looking. The real decision is the
-    <b>neighbourhood</b>, because "near schools" and "near homes" only really count at street level. Check for:</div>
-  <div class="grid-2">
-    <div class="box"><h3>🏫 Near schools</h3><p class="muted small">3+ primary or secondary schools within 1 km (a 10–15 min walk).
-      Kids can come straight from school, and the schools are where you recruit.</p></div>
-    <div class="box"><h3>🏘️ In residential areas</h3><p class="muted small">Dense family housing, not business districts. Check
-      census data for the share of households with children aged 5–17.</p></div>
-    <div class="box"><h3>🚌 Easy to reach</h3><p class="muted small">Bus, tram or metro stop within 5 minutes, safe cycling
-      routes, and a short-stay drop-off area for parents.</p></div>
-    <div class="box"><h3>📐 The building</h3><p class="muted small">At least 7 m clear height for the court and roughly
-      1,000 m² of floor (see the Calculator). Warehouses and light-industrial units are usually cheapest.</p></div>
-    <div class="box"><h3>⚔️ Competition</h3><p class="muted small">Map basketball clubs within 3 km. Long waiting lists at nearby
-      clubs mean there's demand they can't meet.</p></div>
-    <div class="box"><h3>💶 Ability to pay</h3><p class="muted small">Mid-level household incomes keep fees affordable. Add
-      grant-funded free places in low-income areas.</p></div>
-  </div>
-  <p class="small muted">City scores are rough 1–10 estimates from public data: population density of the city itself,
-    the country's share of young people (Eurostat), how popular basketball is in that country, and cost of living.
-    Check your shortlist against local census and school-location data.</p>
-</section>
-
 <!-- ================= PARAMETERS ================= -->
 <section class="panel" id="p-params">
   <h1>Every parameter so far</h1>
-  <p class="lead">Everything that's been asked for in this project, with duplicates merged, and where each one is on
-    the site.</p>
+  <p class="lead">Everything that's been asked for in this project, with duplicates merged, and where each one is on the site.</p>
   <div id="paramList"></div>
-  <h2>Duplicates removed</h2>
-  <p class="small muted">These were asked for more than once in different words. Each now appears only once above.</p>
-  <ul class="muted" id="dupList"></ul>
+  <details class="fold">
+    <summary>🔁 Duplicates removed <span class="hint" id="dupHint"></span></summary>
+    <div class="fold-body"><ul class="muted" id="dupList"></ul></div>
+  </details>
 </section>
 
-<footer>All figures are estimates you can change. Your edits are saved in your own browser only.</footer>
+<footer>All figures are estimates unless a source is shown. Your edits are saved in your own browser only.
+  Source code: <a href="https://github.com/anuroopbs/basketball-academy-planner" target="_blank" rel="noopener">github.com/anuroopbs/basketball-academy-planner</a></footer>
 </div>
 
 <script src="assets/data.js"></script>
