@@ -13,8 +13,10 @@
     --text: #f2f3f5;
     --muted: #9aa1ad;
     --accent: #ff7a1a;
+    --accent-soft: #2a1a0d;
     --good: #2ecc71;
     --bad: #ff5c5c;
+    --info: #4da3ff;
   }
   * { box-sizing: border-box; }
   body {
@@ -22,230 +24,674 @@
     background: var(--bg);
     color: var(--text);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    line-height: 1.4;
+    line-height: 1.5;
   }
-  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
-  header h1 { margin: 0 0 4px; font-size: 28px; }
-  header p { margin: 0; color: var(--muted); }
+  a { color: var(--info); }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px 64px; }
 
-  /* Slider */
-  .lever {
-    margin: 28px 0;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
+  /* Header + tabs */
+  .top { position: sticky; top: 0; z-index: 10; background: rgba(15,17,21,.95); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); }
+  .top-inner { max-width: 1100px; margin: 0 auto; padding: 12px 16px 0; }
+  .brand { font-weight: 800; font-size: 18px; }
+  .tabs { display: flex; gap: 4px; overflow-x: auto; margin-top: 8px; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    background: none; border: none; color: var(--muted); font: inherit; font-weight: 600;
+    padding: 12px 14px; min-height: 44px; cursor: pointer; white-space: nowrap;
+    border-bottom: 3px solid transparent;
   }
-  .lever-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-  .lever-label { color: var(--muted); font-size: 14px; text-transform: uppercase; letter-spacing: .06em; }
-  .lever-value { font-size: 40px; font-weight: 800; color: var(--accent); }
-  .lever-value small { font-size: 18px; color: var(--text); font-weight: 600; margin-left: 6px; }
-  input[type=range] { width: 100%; margin: 16px 0 6px; accent-color: var(--accent); height: 32px; cursor: pointer; }
-  .ticks { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; padding: 0 4px; }
+  .tab:hover { color: var(--text); }
+  .tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+  .panel { display: none; padding-top: 24px; }
+  .panel.active { display: block; }
+
+  h1 { font-size: 30px; margin: 0 0 8px; }
+  h2 { font-size: 20px; margin: 36px 0 12px; }
+  h3 { font-size: 16px; margin: 0 0 6px; }
+  .lead { color: var(--muted); font-size: 16px; max-width: 760px; margin: 0; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+
+  .box { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  .grid-2 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
 
   /* Cards */
-  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 18px;
-    transition: transform .15s ease;
-  }
-  .card.hero { border-color: var(--accent); background: linear-gradient(160deg, #2a1a0d, var(--panel) 60%); }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; transition: transform .15s ease; }
+  .card.hero { border-color: var(--accent); background: linear-gradient(160deg, var(--accent-soft), var(--panel) 60%); }
   .card .label { color: var(--muted); font-size: 13px; }
   .card .value { font-size: 28px; font-weight: 800; margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
   .card .sub { color: var(--muted); font-size: 12px; }
-  .card.pulse { transform: scale(1.02); }
+  .card.link { cursor: pointer; }
+  .card.link:hover { border-color: var(--accent); }
   .pos { color: var(--good); }
   .neg { color: var(--bad); }
 
-  /* Breakdown table */
-  h2 { font-size: 18px; margin: 36px 0 12px; }
-  table { width: 100%; border-collapse: collapse; background: var(--panel); border-radius: 12px; overflow: hidden; font-size: 14px; }
-  th, td { padding: 10px 14px; border-bottom: 1px solid var(--border); text-align: right; font-variant-numeric: tabular-nums; }
-  th:first-child, td:first-child { text-align: left; }
-  th { color: var(--muted); font-weight: 600; background: var(--panel-2); }
-  tr.total td { font-weight: 800; color: var(--accent); }
+  /* Levers */
+  .levers { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin: 20px 0 24px; }
+  .lever { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px 10px; }
+  .lever.main { grid-column: 1 / -1; border-color: var(--accent); }
+  .lever-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .lever-label { color: var(--muted); font-size: 14px; }
+  .lever-value { font-size: 22px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .lever.main .lever-value { font-size: 38px; }
+  input[type=range] { width: 100%; accent-color: var(--accent); height: 32px; cursor: pointer; margin: 6px 0 0; }
+
+  /* Tables */
   .table-scroll { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; background: var(--panel); font-size: 14px; }
+  th, td { padding: 10px 14px; border-bottom: 1px solid var(--border); text-align: right; font-variant-numeric: tabular-nums; vertical-align: top; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--muted); font-weight: 600; background: var(--panel-2); white-space: nowrap; }
+  td.l, th.l { text-align: left; }
+  tr.total td { font-weight: 800; color: var(--accent); }
+  tr.section td { background: var(--panel-2); color: var(--muted); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
 
   /* Assumptions */
-  details { margin-top: 36px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
-  summary { cursor: pointer; font-weight: 700; font-size: 16px; }
+  details { margin-top: 28px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
+  summary { cursor: pointer; font-weight: 700; font-size: 16px; min-height: 28px; }
   .groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-top: 16px; }
   .group h3 { font-size: 13px; color: var(--accent); text-transform: uppercase; letter-spacing: .06em; margin: 0 0 8px; }
-  .field { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; }
+  .field { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 5px 0; }
   .field label { font-size: 14px; color: var(--muted); }
   .field input {
-    width: 130px; background: var(--panel-2); color: var(--text);
+    width: 120px; background: var(--panel-2); color: var(--text);
     border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
     font-size: 15px; text-align: right; min-height: 40px;
   }
   .field input:focus { outline: 2px solid var(--accent); border-color: transparent; }
-  .reset { margin-top: 14px; background: none; border: 1px solid var(--border); color: var(--muted); padding: 10px 14px; border-radius: 8px; cursor: pointer; min-height: 44px; }
-  .reset:hover { color: var(--text); border-color: var(--muted); }
-  footer { margin-top: 32px; color: var(--muted); font-size: 12px; }
+  .btn { margin-top: 14px; background: none; border: 1px solid var(--border); color: var(--muted); padding: 10px 14px; border-radius: 8px; cursor: pointer; min-height: 44px; font: inherit; }
+  .btn:hover { color: var(--text); border-color: var(--muted); }
+
+  /* Tags, badges */
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--panel-2); color: var(--muted); border: 1px solid var(--border); margin: 2px 4px 2px 0; }
+  .tag.in { color: var(--good); border-color: #1f5c38; }
+  .tag.eu { color: var(--info); border-color: #1d4a7a; }
+  .tag.nat { color: #e0b0ff; border-color: #55306b; }
+  .tag.pri { color: #ffd166; border-color: #6b5520; }
+  .note { border-left: 3px solid var(--accent); background: var(--panel); padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 16px 0; font-size: 14px; }
+
+  /* Funding */
+  .fund { display: flex; flex-direction: column; gap: 6px; }
+  .fund .amount { font-size: 22px; font-weight: 800; color: var(--accent); }
+  .fund ul { margin: 4px 0 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+
+  /* Cities */
+  .rank { display: flex; gap: 14px; align-items: flex-start; }
+  .rank-num { flex: 0 0 44px; height: 44px; border-radius: 12px; background: var(--accent); color: #111; font-weight: 900; font-size: 22px; display: grid; place-items: center; }
+  .score { font-weight: 800; color: var(--accent); }
+  .bar { height: 6px; background: var(--panel-2); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .bar > span { display: block; height: 100%; background: var(--accent); }
+  .weights { display: grid; gap: 10px 18px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .weights .lever { padding: 10px 14px 6px; }
+  .weights .lever-value { font-size: 18px; }
+
+  /* Revenue streams */
+  .stream h3 { display: flex; gap: 8px; align-items: center; }
+  .stream .price { color: var(--accent); font-weight: 700; font-size: 14px; }
+  .stream p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+
+  footer { margin-top: 40px; color: var(--muted); font-size: 12px; }
 </style>
 </head>
 <body>
+
+<div class="top">
+  <div class="top-inner">
+    <div class="brand">🏀 Basketball Academy Planner</div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="about">About</button>
+      <button class="tab" role="tab" data-tab="calc">Investment calculator</button>
+      <button class="tab" role="tab" data-tab="revenue">Revenue streams</button>
+      <button class="tab" role="tab" data-tab="funding">EU funding</button>
+      <button class="tab" role="tab" data-tab="cities">Best cities</button>
+    </nav>
+  </div>
+</div>
+
 <div class="wrap">
-  <header>
-    <h1>🏀 Basketball Academy Planner</h1>
-    <p>Move the slider to see what it takes to run 1, 2, 3 or more academies.</p>
-  </header>
 
-  <section class="lever">
-    <div class="lever-top">
-      <span class="lever-label">Number of academies</span>
-      <span class="lever-value"><span id="nOut">1</span><small id="nWord">academy</small></span>
-    </div>
-    <input type="range" id="n" min="1" max="10" step="1" value="1" aria-label="Number of academies">
-    <div class="ticks" id="ticks"></div>
-  </section>
+<!-- ================= ABOUT ================= -->
+<section class="panel" id="p-about">
+  <h1>Youth basketball academies across Europe</h1>
+  <p class="lead">A network of basketball academies for kids aged <b>8–18</b>, set up in dense family neighbourhoods
+    close to schools, so getting to training is a short walk or bus ride after the school day.
+    Adult sessions, pickup games and camps fill the court hours that kids don't use.</p>
 
-  <section class="cards" id="cards"></section>
+  <h2>At a glance</h2>
+  <div class="grid" id="aboutCards"></div>
 
-  <h2>Breakdown</h2>
-  <div class="table-scroll">
-    <table>
-      <thead><tr><th>Item</th><th>Per academy</th><th id="thTotal">Total (1)</th></tr></thead>
-      <tbody id="breakdown"></tbody>
-    </table>
+  <h2>The plan</h2>
+  <div class="grid-2">
+    <div class="box"><h3>🎯 Who it's for</h3><p class="muted small">Kids and teens aged 8–18, grouped by age and level
+      (8–11 fundamentals, 12–14 development, 15–18 competitive). Adults use the courts in the evenings and on weekends.</p></div>
+    <div class="box"><h3>📍 Where it goes</h3><p class="muted small">Dense residential areas within walking distance of several
+      schools. We rent sports halls by the hour at first and only build our own courts once demand is proven.
+      See <a href="#cities">Best cities</a>.</p></div>
+    <div class="box"><h3>💶 How it makes money</h3><p class="muted small">Weekly kids coaching is the core. Camps, adult
+      training, pickup games, court rental, parties and sponsorship add to it. See <a href="#revenue">Revenue streams</a>.</p></div>
+    <div class="box"><h3>🇪🇺 How it's funded</h3><p class="muted small">Founder capital plus EU (Erasmus+ Sport) and
+      national sport grants, applied for through a non-profit club partner. See <a href="#funding">EU funding</a>.</p></div>
   </div>
 
-  <details id="assumptionsBox">
-    <summary>⚙️ Edit assumptions (all numbers per academy, in ₹)</summary>
-    <div class="groups" id="groups"></div>
-    <button class="reset" id="reset">Reset to defaults</button>
-  </details>
+  <h2>Explore</h2>
+  <div class="grid">
+    <div class="card link" data-go="calc"><div class="label">Tab</div><div class="value">🧮 Calculator</div><div class="sub">Move the sliders to see the investment, profit and break-even</div></div>
+    <div class="card link" data-go="revenue"><div class="label">Tab</div><div class="value">💶 Revenue</div><div class="sub">Every way the academy can earn money</div></div>
+    <div class="card link" data-go="funding"><div class="label">Tab</div><div class="value">🇪🇺 Funding</div><div class="sub">EU and national grants, with amounts</div></div>
+    <div class="card link" data-go="cities"><div class="label">Tab</div><div class="value">🏙️ Cities</div><div class="sub">Top 5 EU cities and the scoring method</div></div>
+  </div>
+</section>
 
-  <footer>All figures are estimates you can change above. Your edits are saved in this browser.</footer>
+<!-- ================= CALCULATOR ================= -->
+<section class="panel" id="p-calc">
+  <h1>Investment calculator</h1>
+  <p class="lead">Move any slider and every number updates. The sliders are per academy unless they say otherwise.
+    You can change the detailed costs at the bottom.</p>
+
+  <div class="levers" id="levers"></div>
+  <div class="grid" id="calcCards"></div>
+
+  <h2>Monthly revenue by stream</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Stream</th><th>Per academy / month</th><th id="thRevTotal">All academies</th><th>Share</th></tr></thead>
+    <tbody id="revTable"></tbody>
+  </table></div>
+
+  <h2>Investment breakdown</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Item</th><th>Per academy</th><th id="thInvTotal">All academies</th></tr></thead>
+    <tbody id="invTable"></tbody>
+  </table></div>
+
+  <details>
+    <summary>⚙️ Edit detailed assumptions (per academy, €)</summary>
+    <div class="groups" id="groups"></div>
+    <button class="btn" id="reset">Reset everything to defaults</button>
+  </details>
+</section>
+
+<!-- ================= REVENUE ================= -->
+<section class="panel" id="p-revenue">
+  <h1>Revenue streams</h1>
+  <p class="lead">Every way an academy can earn money. Kids coaching is the core. The rest uses court hours that would
+    otherwise sit empty (school hours, late evenings, weekends, holidays). Streams marked
+    <span class="tag in">In calculator</span> are already counted in the investment calculator.
+    Prices are typical Western European ranges. Check them against local competitors.</p>
+  <div id="streams"></div>
+</section>
+
+<!-- ================= FUNDING ================= -->
+<section class="panel" id="p-funding">
+  <h1>EU funding</h1>
+  <p class="lead">Grants and finance available to a youth basketball academy in the EU, with amounts.
+    Checked 14 October 2026.</p>
+
+  <div class="note"><b>Read this first.</b> Most EU and national sport grants go to <b>non-profit</b> organisations and pay for
+    <b>projects</b> (a programme, an event, a coach exchange), not day-to-day running costs. The usual setup is a company that runs
+    the academy plus a registered non-profit club or association that applies for grants. Erasmus+ also needs
+    <b>partner organisations in other countries</b>, which suits a multi-city academy well.</div>
+
+  <div class="note"><b>Timing.</b> The 2026 Erasmus+ Sport deadline was <b>5 March 2026</b>, so it has passed. The next
+    round is normally announced in the autumn with a deadline in early spring. Plan to apply for the 2027 round and watch the
+    <a href="https://ec.europa.eu/info/funding-tenders/opportunities/portal/" target="_blank" rel="noopener">EU Funding &amp; Tenders portal</a>.</div>
+
+  <h2>Total funding potential</h2>
+  <div class="grid" id="fundCards"></div>
+
+  <h2>Programmes</h2>
+  <div class="grid-2" id="funds"></div>
+
+  <h2>Sources</h2>
+  <ul class="small muted">
+    <li><a href="https://erasmus-plus.ec.europa.eu/programme-guide/part-b/key-action-2/sport" target="_blank" rel="noopener">Erasmus+ Programme Guide: Sport (European Commission)</a></li>
+    <li><a href="https://www.fundingprogrammesportal.gov.cy/en/call/small-scale-partnerships-en-2025/" target="_blank" rel="noopener">ERASMUS-SPORT-2026-SSCP small-scale partnerships (€30k / €60k)</a></li>
+    <li><a href="https://www.confindustria.it/en/?p=21716" target="_blank" rel="noopener">Cooperation partnerships lump sums (€120k / €250k / €400k)</a></li>
+    <li><a href="https://sporbilimleri.gelisim.edu.tr/en/akademik-news-erasmus-grants-in-the-field-of-sports" target="_blank" rel="noopener">Erasmus+ sport grants summary (event amounts, durations, 2026 deadline)</a></li>
+    <li><a href="https://www.fai.ie/domestic/facilities/sports-capital-and-equipment-programme-2023" target="_blank" rel="noopener">Ireland Sports Capital &amp; Equipment Programme (latest published caps, 2023 round)</a></li>
+  </ul>
+  <p class="small muted">Amounts for ERDF, ESF+, InvestEU and national schemes depend on each country's or region's own calls. Check
+    them with the local managing authority or sport agency before relying on them.</p>
+</section>
+
+<!-- ================= CITIES ================= -->
+<section class="panel" id="p-cities">
+  <h1>Best cities in the EU</h1>
+  <p class="lead">12 EU cities scored on 8 factors. You can change how much each factor matters with the sliders below,
+    and the ranking updates.</p>
+
+  <h2>Top 5</h2>
+  <div class="grid-2" id="top5"></div>
+
+  <h2>Scoring factors and weights</h2>
+  <p class="muted small">Each city gets a score from 1 to 10 on every factor. The final score is a weighted average out of 100.
+    The default weights favour what matters most for a kids' academy: lots of families and schools close together.</p>
+  <div class="weights" id="weights"></div>
+  <button class="btn" id="resetWeights">Reset weights</button>
+
+  <h2>All cities</h2>
+  <div class="table-scroll"><table>
+    <thead id="cityHead"></thead>
+    <tbody id="cityBody"></tbody>
+  </table></div>
+
+  <h2>Choosing the exact location inside a city</h2>
+  <div class="note">A city-level score only says where to start. The real decision is the <b>neighbourhood</b>, and the
+    school and housing factors only really count at that level. Look for a site that meets these:</div>
+  <div class="grid-2">
+    <div class="box"><h3>🏫 Near schools</h3><p class="muted small">At least 3 primary or secondary schools within 1 km (a 10–15 minute walk).
+      Kids can come straight from school and parents don't have to drive. Schools are also where you recruit and run partnerships.</p></div>
+    <div class="box"><h3>🏘️ In residential areas</h3><p class="muted small">Dense family housing (apartments and terraces), not business
+      districts. Check census data for the share of households with children aged 5–17.</p></div>
+    <div class="box"><h3>🚌 Easy to reach</h3><p class="muted small">Bus, tram or metro stop within 5 minutes, safe walking and cycling routes,
+      and a short-stay drop-off spot for parents.</p></div>
+    <div class="box"><h3>🕓 Hall free when kids are</h3><p class="muted small">Indoor hall available weekdays 15:30–20:00 and weekend mornings.
+      School and municipal halls are often free at exactly these times and rent by the hour.</p></div>
+    <div class="box"><h3>⚔️ Competition</h3><p class="muted small">Map existing basketball clubs within 3 km. Long waiting lists at
+      nearby clubs are a good sign of unmet demand.</p></div>
+    <div class="box"><h3>💶 Ability to pay</h3><p class="muted small">Medium household income keeps the fee affordable. Mix in
+      grant-funded free places for low-income areas (these also strengthen grant applications).</p></div>
+  </div>
+  <p class="small muted">City scores are indicative 1–10 estimates from public data: city-proper population density, national
+    share of young people (Eurostat), basketball's popularity in that country, and relative cost of living. Use them to
+    compare cities, then check a shortlist with local census and school-location data.</p>
+</section>
+
+<footer>All figures are estimates you can change. Your edits are saved in this browser.</footer>
 </div>
 
 <script>
-// ---- Assumptions (per academy) ----
-const GROUPS = [
-  { title: "One-time setup", fields: [
-    ["courtSetup",   "Court build / flooring", 1000000],
-    ["equipment",    "Hoops, balls & gear",     150000],
-    ["launch",       "Launch marketing & branding", 100000],
-    ["deposits",     "Rent deposit & legal",    150000],
-  ]},
-  { title: "Monthly running cost", fields: [
-    ["rent",         "Rent / court lease",       60000],
-    ["coaches",      "Number of coaches",            2],
-    ["coachSalary",  "Salary per coach",         35000],
-    ["staff",        "Admin / support staff",    20000],
-    ["utilities",    "Electricity & utilities",  10000],
-    ["marketing",    "Ongoing marketing",        15000],
-  ]},
-  { title: "Revenue & buffer", fields: [
-    ["students",     "Students enrolled",           80],
-    ["fee",          "Monthly fee per student",   3000],
-    ["bufferMonths", "Months of running cost kept as buffer", 3],
-  ]},
-];
-const DEFAULTS = Object.fromEntries(GROUPS.flatMap(g => g.fields.map(([k,,v]) => [k, v])));
-const STORE_KEY = "bball-planner-v1";
-
-let A = { ...DEFAULTS };
-try { Object.assign(A, JSON.parse(localStorage.getItem(STORE_KEY) || "{}")); } catch {}
-
-// ---- Formatting (Indian lakh / crore) ----
-const inr = v => "₹" + Math.round(v).toLocaleString("en-IN");
+// ======================================================================
+// Shared helpers
+// ======================================================================
+const $ = id => document.getElementById(id);
+const eur = v => (v < 0 ? "-" : "") + "€" + Math.round(Math.abs(v)).toLocaleString("en-IE");
 function short(v) {
   const s = v < 0 ? "-" : "", a = Math.abs(v);
-  if (a >= 1e7) return s + "₹" + (a / 1e7).toFixed(2).replace(/\.?0+$/, "") + " Cr";
-  if (a >= 1e5) return s + "₹" + (a / 1e5).toFixed(2).replace(/\.?0+$/, "") + " L";
-  return s + inr(a);
+  if (a >= 1e6) return s + "€" + (a / 1e6).toFixed(2).replace(/\.?0+$/, "") + "M";
+  if (a >= 1e4) return s + "€" + (a / 1e3).toFixed(0) + "k";
+  if (a >= 1e3) return s + "€" + (a / 1e3).toFixed(1).replace(/\.0$/, "") + "k";
+  return s + "€" + Math.round(a);
 }
+const STORE_KEY = "bball-planner-v2";
+function load() { try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); } catch { return {}; } }
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify({ A, W })); } catch {} }
+const saved = load();
 
-// ---- Model ----
-function compute(n) {
-  const setup = A.courtSetup + A.equipment + A.launch + A.deposits;
-  const coachCost = A.coaches * A.coachSalary;
-  const monthlyCost = A.rent + coachCost + A.staff + A.utilities + A.marketing;
+// ======================================================================
+// Tabs (URL hash, so tabs are linkable)
+// ======================================================================
+const TABS = ["about", "calc", "revenue", "funding", "cities"];
+function showTab(name) {
+  if (!TABS.includes(name)) name = "about";
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t.dataset.tab === name));
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id === "p-" + name));
+  if (location.hash.slice(1) !== name) history.replaceState(null, "", "#" + name);
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => showTab(t.dataset.tab)));
+document.querySelectorAll("[data-go]").forEach(c => c.addEventListener("click", () => showTab(c.dataset.go)));
+window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));
+
+// ======================================================================
+// Calculator model
+// ======================================================================
+// Sliders: the "levers" shown at the top of the calculator.
+const LEVERS = [
+  { k: "n",          label: "Number of academies",           min: 1,  max: 10,   step: 1,   v: 1,   fmt: v => v, main: true },
+  { k: "kids",       label: "Kids enrolled per academy",     min: 20, max: 300,  step: 5,   v: 120, fmt: v => v },
+  { k: "kidsFee",    label: "Kids monthly fee",              min: 20, max: 150,  step: 5,   v: 65,  fmt: v => "€" + v },
+  { k: "adults",     label: "Adult members per academy",     min: 0,  max: 200,  step: 5,   v: 40,  fmt: v => v },
+  { k: "pickup",     label: "Pickup-game visits per month",  min: 0,  max: 1000, step: 10,  v: 250, fmt: v => v },
+  { k: "campWeeks",  label: "Holiday camp weeks per year",   min: 0,  max: 16,   step: 1,   v: 8,   fmt: v => v },
+  { k: "grantPct",   label: "Setup cost covered by grants",  min: 0,  max: 80,   step: 5,   v: 0,   fmt: v => v + "%" },
+];
+// Detailed per-academy assumptions (edit panel).
+const GROUPS = [
+  { title: "One-time setup", fields: [
+    ["equipment",    "Hoops, balls, gear, video kit", 12000],
+    ["fitout",       "Fit-out & branding",             8000],
+    ["launch",       "Launch marketing",               6000],
+    ["legal",        "Legal, insurance, deposits",     6000],
+    ["bufferMonths", "Months of costs kept as buffer",    3],
+  ]},
+  { title: "Monthly running cost", fields: [
+    ["hallHours",    "Hall hours rented per month",     100],
+    ["hallRate",     "Hall rent per hour",               45],
+    ["headCoach",    "Head coach salary",              3500],
+    ["asstCoaches",  "Assistant coaches",                 2],
+    ["asstSalary",   "Salary per assistant",           1800],
+    ["admin",        "Admin / front desk",             1500],
+    ["insurance",    "Insurance, software, other",      700],
+    ["marketing",    "Ongoing marketing",               800],
+  ]},
+  { title: "Other revenue", fields: [
+    ["adultFee",     "Adult monthly fee",                45],
+    ["pickupFee",    "Pickup game fee per visit",         7],
+    ["campKids",     "Kids per camp week",               40],
+    ["campFee",      "Camp fee per kid per week",       180],
+    ["campCostPct",  "Camp running cost (% of camp revenue)", 40],
+    ["parties",      "Birthday parties per month",        4],
+    ["partyFee",     "Price per party",                 220],
+    ["privateHrs",   "Private 1:1 sessions per month",   20],
+    ["privateFee",   "Price per private session",        45],
+    ["sponsor",      "Local sponsorship per month",     500],
+  ]},
+];
+const DEFAULTS = Object.fromEntries([
+  ...LEVERS.map(l => [l.k, l.v]),
+  ...GROUPS.flatMap(g => g.fields.map(([k,,v]) => [k, v])),
+]);
+let A = { ...DEFAULTS, ...(saved.A || {}) };
+
+function compute() {
+  const n = A.n;
+  const setup = A.equipment + A.fitout + A.launch + A.legal;
+  const camp = A.campWeeks * A.campKids * A.campFee / 12;              // averaged per month
+  const streams = [
+    ["Kids coaching",        A.kids * A.kidsFee],
+    ["Holiday camps (avg)",  camp],
+    ["Adult training",       A.adults * A.adultFee],
+    ["Pickup games",         A.pickup * A.pickupFee],
+    ["Private 1:1 coaching", A.privateHrs * A.privateFee],
+    ["Birthday parties",     A.parties * A.partyFee],
+    ["Sponsorship",          A.sponsor],
+  ];
+  const revenue = streams.reduce((s, [, v]) => s + v, 0);
+  const costs = [
+    ["Hall rent",           A.hallHours * A.hallRate],
+    ["Head coach",          A.headCoach],
+    ["Assistant coaches",   A.asstCoaches * A.asstSalary],
+    ["Admin",               A.admin],
+    ["Insurance & other",   A.insurance],
+    ["Marketing",           A.marketing],
+    ["Camp running costs",  camp * A.campCostPct / 100],
+  ];
+  const monthlyCost = costs.reduce((s, [, v]) => s + v, 0);
   const buffer = monthlyCost * A.bufferMonths;
-  const revenue = A.students * A.fee;
+  const grant = setup * A.grantPct / 100;
+  const perAcademyInvest = setup - grant + buffer;
   const profit = revenue - monthlyCost;
   return {
-    setup, coachCost, monthlyCost, buffer, revenue, profit,
-    investment: (setup + buffer) * n,
-    breakEven: profit > 0 ? (setup + buffer) / profit : null,
+    n, setup, grant, buffer, streams, revenue, costs, monthlyCost, profit, perAcademyInvest,
+    investment: perAcademyInvest * n,
+    breakEven: profit > 0 ? perAcademyInvest / profit : null,
+    coaches: 1 + A.asstCoaches,
   };
 }
 
-// ---- Render ----
-const $ = id => document.getElementById(id);
+// ---- Render levers ----
+$("levers").innerHTML = LEVERS.map(l => `
+  <div class="lever${l.main ? " main" : ""}">
+    <div class="lever-top"><span class="lever-label">${l.label}</span><span class="lever-value" id="lv_${l.k}"></span></div>
+    <input type="range" id="l_${l.k}" min="${l.min}" max="${l.max}" step="${l.step}" value="${A[l.k]}" aria-label="${l.label}">
+  </div>`).join("");
+LEVERS.forEach(l => $("l_" + l.k).addEventListener("input", e => {
+  A[l.k] = Number(e.target.value); save(); renderCalc();
+}));
 
-function buildTicks() {
-  $("ticks").innerHTML = Array.from({ length: 10 }, (_, i) => `<span>${i + 1}</span>`).join("");
-}
-
+// ---- Render detailed assumptions ----
 function buildAssumptions() {
   $("groups").innerHTML = GROUPS.map(g => `
     <div class="group"><h3>${g.title}</h3>
       ${g.fields.map(([k, label]) => `
         <div class="field"><label for="f_${k}">${label}</label>
-          <input id="f_${k}" data-k="${k}" type="number" min="0" inputmode="numeric" value="${A[k]}"></div>`).join("")}
+          <input id="f_${k}" data-k="${k}" type="number" min="0" inputmode="decimal" value="${A[k]}"></div>`).join("")}
     </div>`).join("");
   $("groups").querySelectorAll("input").forEach(inp => inp.addEventListener("input", () => {
-    A[inp.dataset.k] = Math.max(0, Number(inp.value) || 0);
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(A)); } catch {}
-    render(false);
+    A[inp.dataset.k] = Math.max(0, Number(inp.value) || 0); save(); renderCalc();
   }));
 }
+$("reset").addEventListener("click", () => {
+  A = { ...DEFAULTS }; save();
+  LEVERS.forEach(l => $("l_" + l.k).value = A[l.k]);
+  buildAssumptions(); renderCalc();
+});
 
-function render(pulse = true) {
-  const n = Number($("n").value);
-  const m = compute(n);
-  $("nOut").textContent = n;
-  $("nWord").textContent = n === 1 ? "academy" : "academies";
-  $("thTotal").textContent = `Total (${n})`;
+function cardHtml(c) {
+  return `<div class="card${c.hero ? " hero" : ""}"><div class="label">${c.label}</div>
+    <div class="value">${c.value}</div><div class="sub">${c.sub}</div></div>`;
+}
 
+function renderCalc() {
+  LEVERS.forEach(l => $("lv_" + l.k).textContent =
+    l.k === "n" ? `${A.n} ${A.n === 1 ? "academy" : "academies"}` : l.fmt(A[l.k]));
+  const m = compute(), n = m.n;
   const cls = v => v >= 0 ? "pos" : "neg";
+
   const cards = [
     { hero: true, label: "Total investment needed", value: short(m.investment),
-      sub: `Setup + ${A.bufferMonths} months buffer × ${n}` },
-    { label: "One-time setup", value: short(m.setup * n), sub: `${short(m.setup)} per academy` },
-    { label: "Monthly running cost", value: short(m.monthlyCost * n), sub: `${short(m.monthlyCost)} per academy` },
-    { label: "Monthly revenue", value: short(m.revenue * n), sub: `${A.students * n} students × ${inr(A.fee)}` },
+      sub: `Setup${m.grant ? " after grants" : ""} + ${A.bufferMonths} months buffer, × ${n}` },
+    { label: "One-time setup", value: short(m.setup * n), sub: `${eur(m.setup)} per academy` },
+    { label: "Grant funding used", value: short(m.grant * n), sub: `${A.grantPct}% of setup. See the EU funding tab` },
+    { label: "Monthly revenue", value: short(m.revenue * n), sub: `${eur(m.revenue)} per academy` },
+    { label: "Monthly running cost", value: short(m.monthlyCost * n), sub: `${eur(m.monthlyCost)} per academy` },
     { label: "Monthly profit", value: `<span class="${cls(m.profit)}">${short(m.profit * n)}</span>`,
       sub: `Yearly: ${short(m.profit * n * 12)}` },
     { label: "Break-even", value: m.breakEven === null ? `<span class="neg">Never</span>` : `${Math.ceil(m.breakEven)} months`,
-      sub: m.breakEven === null ? "Running costs exceed revenue" : "Time to earn back the investment" },
-    { label: "Students", value: (A.students * n).toLocaleString("en-IN"), sub: `${A.students} per academy` },
-    { label: "Coaches", value: (A.coaches * n).toLocaleString("en-IN"), sub: `${A.coaches} per academy` },
+      sub: m.breakEven === null ? "Running costs are higher than revenue" : "Time to earn back the investment" },
+    { label: "Kids coached", value: (A.kids * n).toLocaleString("en-IE"), sub: `Ages 8–18, ${A.kids} per academy` },
+    { label: "Coaches employed", value: m.coaches * n, sub: `${m.coaches} per academy` },
+    { label: "Profit margin", value: m.revenue ? `<span class="${cls(m.profit)}">${Math.round(m.profit / m.revenue * 100)}%</span>` : "–",
+      sub: "Profit ÷ revenue" },
   ];
-  $("cards").innerHTML = cards.map(c => `
-    <div class="card${c.hero ? " hero" : ""}${pulse ? " pulse" : ""}">
-      <div class="label">${c.label}</div><div class="value">${c.value}</div><div class="sub">${c.sub}</div>
-    </div>`).join("");
-  if (pulse) requestAnimationFrame(() => setTimeout(() =>
-    document.querySelectorAll(".card.pulse").forEach(el => el.classList.remove("pulse")), 120));
+  $("calcCards").innerHTML = cards.map(cardHtml).join("");
 
-  const rows = [
-    ["Court build / flooring", A.courtSetup],
-    ["Hoops, balls & gear", A.equipment],
-    ["Launch marketing & branding", A.launch],
-    ["Rent deposit & legal", A.deposits],
+  $("thRevTotal").textContent = `All ${n} academ${n === 1 ? "y" : "ies"}`;
+  $("revTable").innerHTML =
+    m.streams.map(([l, v]) => `<tr><td>${l}</td><td>${eur(v)}</td><td>${eur(v * n)}</td>
+      <td>${m.revenue ? Math.round(v / m.revenue * 100) : 0}%</td></tr>`).join("") +
+    `<tr class="total"><td>Total revenue</td><td>${eur(m.revenue)}</td><td>${eur(m.revenue * n)}</td><td>100%</td></tr>`;
+
+  $("thInvTotal").textContent = `All ${n} academ${n === 1 ? "y" : "ies"}`;
+  const inv = [
+    ["Hoops, balls, gear, video kit", A.equipment],
+    ["Fit-out & branding", A.fitout],
+    ["Launch marketing", A.launch],
+    ["Legal, insurance, deposits", A.legal],
     [`Running-cost buffer (${A.bufferMonths} months)`, m.buffer],
   ];
-  $("breakdown").innerHTML =
-    rows.map(([l, v]) => `<tr><td>${l}</td><td>${inr(v)}</td><td>${inr(v * n)}</td></tr>`).join("") +
-    `<tr class="total"><td>Total investment</td><td>${inr(m.setup + m.buffer)}</td><td>${inr(m.investment)}</td></tr>`;
+  if (m.grant) inv.push([`Less grants (${A.grantPct}% of setup)`, -m.grant]);
+  $("invTable").innerHTML =
+    inv.map(([l, v]) => `<tr><td>${l}</td><td>${eur(v)}</td><td>${eur(v * n)}</td></tr>`).join("") +
+    `<tr class="total"><td>Total investment</td><td>${eur(m.perAcademyInvest)}</td><td>${eur(m.investment)}</td></tr>`;
+
+  renderAbout(m);
 }
 
-$("n").addEventListener("input", () => render(true));
-$("reset").addEventListener("click", () => {
-  A = { ...DEFAULTS };
-  try { localStorage.removeItem(STORE_KEY); } catch {}
-  buildAssumptions(); render(false);
+function renderAbout(m) {
+  const n = m.n;
+  $("aboutCards").innerHTML = [
+    { hero: true, label: "Total investment needed", value: short(m.investment), sub: `For ${n} academ${n === 1 ? "y" : "ies"}. Change it in the Calculator` },
+    { label: "Target age group", value: "8–18", sub: "Primary and secondary school kids" },
+    { label: "Kids coached", value: (A.kids * n).toLocaleString("en-IE"), sub: `${A.kids} per academy` },
+    { label: "Monthly profit", value: `<span class="${m.profit >= 0 ? "pos" : "neg"}">${short(m.profit * n)}</span>`, sub: m.breakEven ? `Break-even in ${Math.ceil(m.breakEven)} months` : "Not profitable yet" },
+    { label: "Revenue streams", value: STREAMS.reduce((s, g) => s + g.items.length, 0), sub: "See Revenue streams" },
+    { label: "Top city right now", value: rankCities()[0].name, sub: "See Best cities" },
+  ].map(cardHtml).join("");
+}
+
+// ======================================================================
+// Revenue streams catalogue
+// ======================================================================
+const STREAMS = [
+  { group: "Kids (the core business)", items: [
+    ["Weekly kids coaching", "€50–90 / month", true, "Group sessions 2× a week by age group (8–11, 12–14, 15–18). Monthly subscription, paid by direct debit, billed by term."],
+    ["Holiday camps", "€150–250 / week", true, "Full-day camps in summer, Easter, half-term and Christmas holidays. High margin and uses daytime hours when halls are empty."],
+    ["Private 1:1 & small-group coaching", "€35–60 / hour", true, "Skills, shooting and position-specific work for ambitious players."],
+    ["Elite / development squads", "€90–150 / month", false, "Selective teams that train more and play tournaments. Higher fee, and it builds the academy's reputation."],
+    ["School partnerships (PE & after-school clubs)", "€40–70 / hour, paid by school", false, "Deliver PE lessons or after-school clubs at the school itself. Gets you paid daytime work and brings in new students."],
+    ["Girls-only programmes", "Same as kids coaching", false, "Fewer of these exist, so they fill a gap, and they're very attractive to grant funders."],
+    ["Birthday parties", "€180–300 / party", true, "Weekend basketball parties: coach, games and a party area."],
+  ]},
+  { group: "Adults", items: [
+    ["Adult training sessions", "€35–60 / month", true, "Evening skills and fitness sessions for beginners, returners and parents."],
+    ["Pickup games (drop-in)", "€5–10 / visit", true, "Open runs on fixed evenings. Low effort to run and they build a community."],
+    ["Adult leagues (5×5 and 3×3)", "€300–600 / team / season", false, "Team entry fees for a season of games, plus referee fees."],
+    ["Corporate team-building", "€400–1,500 / event", false, "Company events and office leagues. Good daytime and weeknight income."],
+    ["Parent & child sessions", "€10–15 / session", false, "Weekend family sessions that keep parents involved."],
+  ]},
+  { group: "Facility & events", items: [
+    ["Court rental (sub-letting)", "€40–80 / hour", false, "Rent out your hall hours you don't use to other clubs, schools and groups. Mainly once you have your own court."],
+    ["Tournaments & showcase events", "€20–40 / player or €150+ / team", false, "Youth tournaments, 3×3 events and scout showcases. Entry fees, tickets and stall income."],
+    ["Coach education & certification", "€100–300 / participant", false, "Courses and workshops for parent-coaches, school PE teachers and junior coaches."],
+    ["Video analysis & player reports", "€20–50 / report", false, "Filmed sessions, highlight reels and progress reports for players and families."],
+  ]},
+  { group: "Partnerships & products", items: [
+    ["Local sponsorship", "€2k–20k / year per sponsor", true, "Kit, court banners and naming rights for local businesses, banks and sports shops."],
+    ["Merchandise & kit", "30–50% margin", false, "Academy jerseys, hoodies and balls. The training kit can be part of the sign-up fee."],
+    ["Online / at-home training", "€5–15 / month", false, "App or video programme for practising at home. Earns money between sessions."],
+    ["Café, vending & snacks", "Small but steady", false, "Parents wait during sessions, so even a vending machine earns money."],
+    ["Brand & equipment partnerships", "Kit discounts + commission", false, "Official supplier deals with sports brands, plus affiliate commission on shoes and gear."],
+  ]},
+  { group: "Funding (non-trading income)", items: [
+    ["Grants (EU, national, city)", "€10k–400k per project", false, "Erasmus+ Sport, national sport capital grants and city youth funds. See the EU funding tab."],
+    ["Free places paid for by councils or charities", "Per child", false, "Councils or charities pay for places for low-income kids. Fills spare capacity and strengthens grant bids."],
+  ]},
+];
+$("streams").innerHTML = STREAMS.map(g => `
+  <h2>${g.group}</h2>
+  <div class="grid-2">${g.items.map(([name, price, inCalc, desc]) => `
+    <div class="box stream"><h3>${name}</h3>
+      <div><span class="price">${price}</span> ${inCalc ? '<span class="tag in">In calculator</span>' : ""}</div>
+      <p>${desc}</p></div>`).join("")}</div>`).join("");
+
+// ======================================================================
+// Funding
+// ======================================================================
+const FUNDS = [
+  { name: "Erasmus+ Sport: Small-scale partnerships", type: "eu", amount: "€30,000 or €60,000",
+    pts: ["Fixed lump sum; you pick €30k or €60k", "6–24 months", "At least 2 organisations from 2 different countries",
+          "Made for grassroots clubs: youth participation, inclusion, girls in sport", "2026 deadline was 5 Mar 2026; next round expected early 2027"] },
+  { name: "Erasmus+ Sport: Cooperation partnerships", type: "eu", amount: "€120k / €250k / €400k",
+    pts: ["Lump sum, you choose one of 3 sizes", "12–36 months", "At least 3 organisations from 3 countries",
+          "For bigger projects, e.g. a shared youth coaching method across academies in 3 cities"] },
+  { name: "Erasmus+ Sport: Not-for-profit European sport events", type: "eu", amount: "up to ~€200k–€450k",
+    pts: ["Local event types ~€200k / €300k; European-wide ~€450k", "Large-scale events €1–2M (needs 15 countries)",
+          "Fits an international youth 3×3 tournament or a European Week of Sport event"] },
+  { name: "Erasmus+: Mobility of sport staff", type: "eu", amount: "Travel + daily allowance per person",
+    pts: ["Pays for coaches to train or job-shadow at clubs abroad (e.g. Spain, Lithuania, Serbia)", "Paid at fixed daily and travel rates",
+          "Cheap way to raise your coaches' standard"] },
+  { name: "ERDF: European Regional Development Fund", type: "eu", amount: "Varies; often 40–85% of project cost",
+    pts: ["Run by national/regional managing authorities, not Brussels", "Can fund sport facilities in urban regeneration and community projects",
+          "Mainly relevant when you build your own court or centre"] },
+  { name: "ESF+: European Social Fund Plus", type: "eu", amount: "Varies by country call",
+    pts: ["Social inclusion and youth programmes for disadvantaged kids", "Paid out through national/regional calls",
+          "Can pay for free places and outreach in low-income areas"] },
+  { name: "InvestEU / EIF-backed microloans and SME loans", type: "eu", amount: "Loans, set by the local bank",
+    pts: ["The EU guarantees loans that local banks and microlenders give small businesses", "Easier approval and less collateral needed",
+          "A loan, not a grant, but it fits the trading (for-profit) side of the academy"] },
+  { name: "Ireland: Sports Capital & Equipment Programme", type: "nat", amount: "up to €200k local · €70k equipment",
+    pts: ["Latest published caps (2023 round): €200k local projects, €500k regional, €70k equipment-only",
+          "Clubs that don't own a facility can still get equipment-only grants", "Non-profit clubs only. Check the current round on the OSCAR portal"] },
+  { name: "France: Agence nationale du Sport (ANS)", type: "nat", amount: "Typically €1k–€30k+ per club project",
+    pts: ["Grants to clubs through the basketball federation (PSF, the federation's sport project grants)",
+          "Priority on youth, girls, deprived neighbourhoods (QPV, France's official priority neighbourhoods)", "Separate grants exist for facilities"] },
+  { name: "Spain, Germany, Italy & others: national and city sport grants", type: "nat", amount: "Varies",
+    pts: ["Spain: CSD (Spain's national sports council) plus regional and city councils (ayuntamientos)", "Germany: state (Land) and city sport funding for registered clubs (e.V.)",
+          "Italy: Sport e Salute and regional calls", "Most cities have a youth sport fund. Ask the local sport department"] },
+  { name: "Private: sponsors, foundations, brand programmes", type: "pri", amount: "€2k–€50k+",
+    pts: ["Bank and company CSR (corporate social responsibility) funds and local community foundations",
+          "Sports brands' grassroots programmes (kit and court refurbishments)", "Basketball federation and professional club community programmes"] },
+];
+const TYPE_TAG = { eu: '<span class="tag eu">EU</span>', nat: '<span class="tag nat">National</span>', pri: '<span class="tag pri">Private</span>' };
+$("funds").innerHTML = FUNDS.map(f => `
+  <div class="box fund"><div>${TYPE_TAG[f.type]}</div><h3>${f.name}</h3>
+    <div class="amount">${f.amount}</div><ul>${f.pts.map(p => `<li>${p}</li>`).join("")}</ul></div>`).join("");
+$("fundCards").innerHTML = [
+  { hero: true, label: "Realistic grant funding, year 1", value: "€30k–€90k", sub: "1 small-scale Erasmus+ grant + national/city grants" },
+  { label: "Grant funding, years 2–3 (multi-city)", value: "€150k–€450k", sub: "Cooperation partnership + an event" },
+  { label: "Largest single EU sport grant", value: "€400k", sub: "Erasmus+ cooperation partnership" },
+  { label: "Ireland equipment-only cap", value: "€70k", sub: "Sports Capital & Equipment Programme" },
+].map(cardHtml).join("");
+
+// ======================================================================
+// Cities
+// ======================================================================
+const FACTORS = [
+  { k: "density",  label: "Population density",            w: 20, why: "More people within walking distance of one hall" },
+  { k: "youth",    label: "Share of kids aged 8–18",       w: 20, why: "More potential students per resident" },
+  { k: "schools",  label: "Near schools",                  w: 15, why: "Kids come straight from school; recruitment and partnerships" },
+  { k: "resid",    label: "Residential / family areas",    w: 15, why: "Families live near the hall, so trips are short" },
+  { k: "interest", label: "Basketball interest",           w: 10, why: "How popular basketball already is" },
+  { k: "gap",      label: "Supply gap (few academies)",    w: 10, why: "Unmet demand: waiting lists, few clubs" },
+  { k: "pay",      label: "Ability to pay",                w: 5,  why: "Household income to afford monthly fees" },
+  { k: "cost",     label: "Low operating cost",            w: 5,  why: "Cheaper hall rent and salaries (10 = cheapest)" },
+];
+let W = Object.fromEntries(FACTORS.map(f => [f.k, f.w]));
+Object.assign(W, saved.W || {});
+
+//        name        country          density youth schools resid interest gap pay cost
+const CITY_DATA = [
+  ["Paris",     "France",      10, 7, 9, 7, 8, 5, 8, 3, "Very dense with many schools in every arrondissement, and one of the youngest populations in the EU. Interest in basketball is rising fast (the Wembanyama effect, Paris 2024 Olympic silver). Rents are high, so rent municipal gymnasiums by the hour."],
+  ["Dublin",    "Ireland",      5,10, 7, 8, 5, 9, 9, 3, "Ireland has the highest share of children in the EU. Basketball is growing among young people, but there are few indoor courts and clubs have waiting lists. High incomes support premium fees, and it's English-speaking, so easy to start in."],
+  ["Barcelona", "Spain",        9, 5, 8, 7, 9, 3, 6, 5, "Very dense family neighbourhoods (e.g. Eixample, Sant Martí) and strong basketball culture through FC Barcelona and Joventut. Lots of competition, so stand out on coaching quality and English-language sessions."],
+  ["Athens",    "Greece",       9, 4, 8, 6, 9, 3, 4, 8, "Basketball is close to the national sport, there are dense residential areas, and operating costs are low. Lower incomes cap fees, so it suits volume and camps more than premium pricing."],
+  ["Madrid",    "Spain",        6, 5, 8, 8, 9, 3, 6, 6, "Large family suburbs and a strong school-club basketball culture (Real Madrid, Estudiantes). Well established, so compete with modern coaching and flexible schedules."],
+  ["Amsterdam", "Netherlands",  6, 6, 7, 6, 5, 7, 9, 3, "High incomes and an international community, with a clear lack of basketball clubs. Halls are expensive and hard to book."],
+  ["Berlin",    "Germany",      5, 5, 7, 7, 7, 6, 7, 6, "Germany's 2023 World Cup win sparked interest, ALBA Berlin's youth programmes show demand, and costs are moderate."],
+  ["Munich",    "Germany",      5, 5, 7, 7, 6, 6, 9, 3, "Wealthy families and FC Bayern Basketball's rise. Very high costs and hard to find hall time."],
+  ["Milan",     "Italy",        7, 4, 7, 6, 7, 5, 7, 4, "Dense city with Olimpia Milano's tradition, but an older population and fewer kids."],
+  ["Warsaw",    "Poland",       4, 6, 6, 7, 6, 7, 5, 8, "Fast-growing, young families, low costs, and room in the market for a quality academy."],
+  ["Lisbon",    "Portugal",     6, 4, 6, 6, 5, 7, 5, 6, "Growing expat families and few competitors, but basketball is a small sport there."],
+  ["Vilnius",   "Lithuania",    2, 6, 4, 5,10, 2, 4, 8, "Basketball is the national religion, but the city is small and spread out, and it already has many strong clubs."],
+];
+const CITIES = CITY_DATA.map(([name, country, ...rest]) => {
+  const why = rest.pop();
+  return { name, country, why, s: Object.fromEntries(FACTORS.map((f, i) => [f.k, rest[i]])) };
 });
 
-buildTicks();
+function cityScore(c) {
+  const tw = FACTORS.reduce((s, f) => s + W[f.k], 0) || 1;
+  return FACTORS.reduce((s, f) => s + c.s[f.k] * W[f.k], 0) / tw * 10;   // 0–100
+}
+function rankCities() {
+  return CITIES.map(c => ({ ...c, score: cityScore(c) })).sort((a, b) => b.score - a.score);
+}
+
+$("weights").innerHTML = FACTORS.map(f => `
+  <div class="lever">
+    <div class="lever-top"><span class="lever-label">${f.label}</span><span class="lever-value" id="wv_${f.k}"></span></div>
+    <input type="range" id="w_${f.k}" min="0" max="40" step="1" value="${W[f.k]}" aria-label="Weight: ${f.label}">
+    <div class="small muted">${f.why}</div>
+  </div>`).join("");
+FACTORS.forEach(f => $("w_" + f.k).addEventListener("input", e => {
+  W[f.k] = Number(e.target.value); save(); renderCities(); renderAbout(compute());
+}));
+$("resetWeights").addEventListener("click", () => {
+  FACTORS.forEach(f => { W[f.k] = f.w; $("w_" + f.k).value = f.w; });
+  save(); renderCities(); renderAbout(compute());
+});
+
+function renderCities() {
+  const tw = FACTORS.reduce((s, f) => s + W[f.k], 0) || 1;
+  FACTORS.forEach(f => $("wv_" + f.k).textContent = Math.round(W[f.k] / tw * 100) + "%");
+  const ranked = rankCities();
+
+  $("top5").innerHTML = ranked.slice(0, 5).map((c, i) => {
+    const best = FACTORS.slice().sort((a, b) => c.s[b.k] - c.s[a.k]).slice(0, 3);
+    return `<div class="box"><div class="rank"><div class="rank-num">${i + 1}</div><div style="flex:1">
+      <h3>${c.name} <span class="muted small">· ${c.country}</span></h3>
+      <div class="small">Score <span class="score">${c.score.toFixed(1)}</span> / 100</div>
+      <div class="bar"><span style="width:${c.score}%"></span></div>
+      <p class="small muted" style="margin:10px 0 6px">${c.why}</p>
+      <div>${best.map(f => `<span class="tag">${f.label}: ${c.s[f.k]}/10</span>`).join("")}</div>
+    </div></div></div>`;
+  }).join("");
+
+  $("cityHead").innerHTML = `<tr><th>#</th><th class="l">City</th><th>Score</th>${FACTORS.map(f => `<th>${f.label}</th>`).join("")}</tr>`;
+  $("cityBody").innerHTML = ranked.map((c, i) => `
+    <tr${i < 5 ? ' style="background:var(--accent-soft)"' : ""}><td>${i + 1}</td><td class="l"><b>${c.name}</b><br><span class="muted small">${c.country}</span></td>
+      <td class="score">${c.score.toFixed(1)}</td>${FACTORS.map(f => `<td>${c.s[f.k]}</td>`).join("")}</tr>`).join("");
+}
+
+// ======================================================================
+// Boot
+// ======================================================================
 buildAssumptions();
-render(false);
+renderCities();
+renderCalc();
+showTab(location.hash.slice(1));
 </script>
 </body>
 </html>
