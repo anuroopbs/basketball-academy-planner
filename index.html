@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Basketball Academy Planner</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #181b22;
+    --panel-2: #20242d;
+    --border: #2c313c;
+    --text: #f2f3f5;
+    --muted: #9aa1ad;
+    --accent: #ff7a1a;
+    --good: #2ecc71;
+    --bad: #ff5c5c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.4;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+  header h1 { margin: 0 0 4px; font-size: 28px; }
+  header p { margin: 0; color: var(--muted); }
+
+  /* Slider */
+  .lever {
+    margin: 28px 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .lever-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .lever-label { color: var(--muted); font-size: 14px; text-transform: uppercase; letter-spacing: .06em; }
+  .lever-value { font-size: 40px; font-weight: 800; color: var(--accent); }
+  .lever-value small { font-size: 18px; color: var(--text); font-weight: 600; margin-left: 6px; }
+  input[type=range] { width: 100%; margin: 16px 0 6px; accent-color: var(--accent); height: 32px; cursor: pointer; }
+  .ticks { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; padding: 0 4px; }
+
+  /* Cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    transition: transform .15s ease;
+  }
+  .card.hero { border-color: var(--accent); background: linear-gradient(160deg, #2a1a0d, var(--panel) 60%); }
+  .card .label { color: var(--muted); font-size: 13px; }
+  .card .value { font-size: 28px; font-weight: 800; margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
+  .card .sub { color: var(--muted); font-size: 12px; }
+  .card.pulse { transform: scale(1.02); }
+  .pos { color: var(--good); }
+  .neg { color: var(--bad); }
+
+  /* Breakdown table */
+  h2 { font-size: 18px; margin: 36px 0 12px; }
+  table { width: 100%; border-collapse: collapse; background: var(--panel); border-radius: 12px; overflow: hidden; font-size: 14px; }
+  th, td { padding: 10px 14px; border-bottom: 1px solid var(--border); text-align: right; font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--muted); font-weight: 600; background: var(--panel-2); }
+  tr.total td { font-weight: 800; color: var(--accent); }
+  .table-scroll { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+
+  /* Assumptions */
+  details { margin-top: 36px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
+  summary { cursor: pointer; font-weight: 700; font-size: 16px; }
+  .groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-top: 16px; }
+  .group h3 { font-size: 13px; color: var(--accent); text-transform: uppercase; letter-spacing: .06em; margin: 0 0 8px; }
+  .field { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; }
+  .field label { font-size: 14px; color: var(--muted); }
+  .field input {
+    width: 130px; background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+    font-size: 15px; text-align: right; min-height: 40px;
+  }
+  .field input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .reset { margin-top: 14px; background: none; border: 1px solid var(--border); color: var(--muted); padding: 10px 14px; border-radius: 8px; cursor: pointer; min-height: 44px; }
+  .reset:hover { color: var(--text); border-color: var(--muted); }
+  footer { margin-top: 32px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🏀 Basketball Academy Planner</h1>
+    <p>Move the slider to see what it takes to run 1, 2, 3 or more academies.</p>
+  </header>
+
+  <section class="lever">
+    <div class="lever-top">
+      <span class="lever-label">Number of academies</span>
+      <span class="lever-value"><span id="nOut">1</span><small id="nWord">academy</small></span>
+    </div>
+    <input type="range" id="n" min="1" max="10" step="1" value="1" aria-label="Number of academies">
+    <div class="ticks" id="ticks"></div>
+  </section>
+
+  <section class="cards" id="cards"></section>
+
+  <h2>Breakdown</h2>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Item</th><th>Per academy</th><th id="thTotal">Total (1)</th></tr></thead>
+      <tbody id="breakdown"></tbody>
+    </table>
+  </div>
+
+  <details id="assumptionsBox">
+    <summary>⚙️ Edit assumptions (all numbers per academy, in ₹)</summary>
+    <div class="groups" id="groups"></div>
+    <button class="reset" id="reset">Reset to defaults</button>
+  </details>
+
+  <footer>All figures are estimates you can change above. Your edits are saved in this browser.</footer>
+</div>
+
+<script>
+// ---- Assumptions (per academy) ----
+const GROUPS = [
+  { title: "One-time setup", fields: [
+    ["courtSetup",   "Court build / flooring", 1000000],
+    ["equipment",    "Hoops, balls & gear",     150000],
+    ["launch",       "Launch marketing & branding", 100000],
+    ["deposits",     "Rent deposit & legal",    150000],
+  ]},
+  { title: "Monthly running cost", fields: [
+    ["rent",         "Rent / court lease",       60000],
+    ["coaches",      "Number of coaches",            2],
+    ["coachSalary",  "Salary per coach",         35000],
+    ["staff",        "Admin / support staff",    20000],
+    ["utilities",    "Electricity & utilities",  10000],
+    ["marketing",    "Ongoing marketing",        15000],
+  ]},
+  { title: "Revenue & buffer", fields: [
+    ["students",     "Students enrolled",           80],
+    ["fee",          "Monthly fee per student",   3000],
+    ["bufferMonths", "Months of running cost kept as buffer", 3],
+  ]},
+];
+const DEFAULTS = Object.fromEntries(GROUPS.flatMap(g => g.fields.map(([k,,v]) => [k, v])));
+const STORE_KEY = "bball-planner-v1";
+
+let A = { ...DEFAULTS };
+try { Object.assign(A, JSON.parse(localStorage.getItem(STORE_KEY) || "{}")); } catch {}
+
+// ---- Formatting (Indian lakh / crore) ----
+const inr = v => "₹" + Math.round(v).toLocaleString("en-IN");
+function short(v) {
+  const s = v < 0 ? "-" : "", a = Math.abs(v);
+  if (a >= 1e7) return s + "₹" + (a / 1e7).toFixed(2).replace(/\.?0+$/, "") + " Cr";
+  if (a >= 1e5) return s + "₹" + (a / 1e5).toFixed(2).replace(/\.?0+$/, "") + " L";
+  return s + inr(a);
+}
+
+// ---- Model ----
+function compute(n) {
+  const setup = A.courtSetup + A.equipment + A.launch + A.deposits;
+  const coachCost = A.coaches * A.coachSalary;
+  const monthlyCost = A.rent + coachCost + A.staff + A.utilities + A.marketing;
+  const buffer = monthlyCost * A.bufferMonths;
+  const revenue = A.students * A.fee;
+  const profit = revenue - monthlyCost;
+  return {
+    setup, coachCost, monthlyCost, buffer, revenue, profit,
+    investment: (setup + buffer) * n,
+    breakEven: profit > 0 ? (setup + buffer) / profit : null,
+  };
+}
+
+// ---- Render ----
+const $ = id => document.getElementById(id);
+
+function buildTicks() {
+  $("ticks").innerHTML = Array.from({ length: 10 }, (_, i) => `<span>${i + 1}</span>`).join("");
+}
+
+function buildAssumptions() {
+  $("groups").innerHTML = GROUPS.map(g => `
+    <div class="group"><h3>${g.title}</h3>
+      ${g.fields.map(([k, label]) => `
+        <div class="field"><label for="f_${k}">${label}</label>
+          <input id="f_${k}" data-k="${k}" type="number" min="0" inputmode="numeric" value="${A[k]}"></div>`).join("")}
+    </div>`).join("");
+  $("groups").querySelectorAll("input").forEach(inp => inp.addEventListener("input", () => {
+    A[inp.dataset.k] = Math.max(0, Number(inp.value) || 0);
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(A)); } catch {}
+    render(false);
+  }));
+}
+
+function render(pulse = true) {
+  const n = Number($("n").value);
+  const m = compute(n);
+  $("nOut").textContent = n;
+  $("nWord").textContent = n === 1 ? "academy" : "academies";
+  $("thTotal").textContent = `Total (${n})`;
+
+  const cls = v => v >= 0 ? "pos" : "neg";
+  const cards = [
+    { hero: true, label: "Total investment needed", value: short(m.investment),
+      sub: `Setup + ${A.bufferMonths} months buffer × ${n}` },
+    { label: "One-time setup", value: short(m.setup * n), sub: `${short(m.setup)} per academy` },
+    { label: "Monthly running cost", value: short(m.monthlyCost * n), sub: `${short(m.monthlyCost)} per academy` },
+    { label: "Monthly revenue", value: short(m.revenue * n), sub: `${A.students * n} students × ${inr(A.fee)}` },
+    { label: "Monthly profit", value: `<span class="${cls(m.profit)}">${short(m.profit * n)}</span>`,
+      sub: `Yearly: ${short(m.profit * n * 12)}` },
+    { label: "Break-even", value: m.breakEven === null ? `<span class="neg">Never</span>` : `${Math.ceil(m.breakEven)} months`,
+      sub: m.breakEven === null ? "Running costs exceed revenue" : "Time to earn back the investment" },
+    { label: "Students", value: (A.students * n).toLocaleString("en-IN"), sub: `${A.students} per academy` },
+    { label: "Coaches", value: (A.coaches * n).toLocaleString("en-IN"), sub: `${A.coaches} per academy` },
+  ];
+  $("cards").innerHTML = cards.map(c => `
+    <div class="card${c.hero ? " hero" : ""}${pulse ? " pulse" : ""}">
+      <div class="label">${c.label}</div><div class="value">${c.value}</div><div class="sub">${c.sub}</div>
+    </div>`).join("");
+  if (pulse) requestAnimationFrame(() => setTimeout(() =>
+    document.querySelectorAll(".card.pulse").forEach(el => el.classList.remove("pulse")), 120));
+
+  const rows = [
+    ["Court build / flooring", A.courtSetup],
+    ["Hoops, balls & gear", A.equipment],
+    ["Launch marketing & branding", A.launch],
+    ["Rent deposit & legal", A.deposits],
+    [`Running-cost buffer (${A.bufferMonths} months)`, m.buffer],
+  ];
+  $("breakdown").innerHTML =
+    rows.map(([l, v]) => `<tr><td>${l}</td><td>${inr(v)}</td><td>${inr(v * n)}</td></tr>`).join("") +
+    `<tr class="total"><td>Total investment</td><td>${inr(m.setup + m.buffer)}</td><td>${inr(m.investment)}</td></tr>`;
+}
+
+$("n").addEventListener("input", () => render(true));
+$("reset").addEventListener("click", () => {
+  A = { ...DEFAULTS };
+  try { localStorage.removeItem(STORE_KEY); } catch {}
+  buildAssumptions(); render(false);
+});
+
+buildTicks();
+buildAssumptions();
+render(false);
+</script>
+</body>
+</html>
