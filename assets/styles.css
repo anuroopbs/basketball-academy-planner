@@ -412,3 +412,5 @@ td.tier-row { color: #fca5a5; font-size: 11px; font-weight: 800; text-transform:
 .unit-seg { display: flex; gap: 2px; background: var(--s2); border: 1px solid var(--line-2); border-radius: 10px; padding: 3px; flex: 0 0 auto; }
 .unit-seg button { background: none; border: none; color: var(--muted); font: inherit; font-size: 12.5px; font-weight: 800; padding: 5px 9px; border-radius: 7px; cursor: pointer; min-height: 30px; }
 .unit-seg button.on { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #111; }
+
+.sport-note { margin: 8px 0 0; line-height: 1.4; }

@@ -33,6 +33,9 @@ const SOURCES = {
   court_bd:     ["Badminton court: 13.4 × 6.1 m", "https://en.wikipedia.org/wiki/Badminton"],
   court_pd:     ["Padel court: 20 × 10 m", "https://en.wikipedia.org/wiki/Padel"],
   court_pb:     ["Pickleball court: 44 × 20 ft (13.41 × 6.1 m)", "https://en.wikipedia.org/wiki/Pickleball"],
+  sq_build:     ["ASB Squash: squash court construction (courts share side/front walls; glass back wall with viewing behind)", "https://asbsquash.com/faq/squash-court-construction"],
+  bd_design:    ["Sport England / Badminton England: Badminton Design Guidance (run-off between courts and behind baselines)", "https://worldbadminton.com/reference/documents/badminton-design-guide-dec-2011.pdf"],
+  pb_rules:     ["USA Pickleball rules, section 2: court 20 × 44 ft; minimum playing area 30 × 60 ft; 34 × 64 ft for new construction", "https://www.playpickleball.com/2025-usa-pickleball-rules-section-2-court-and-equipment/"],
   court_hb:     ["Handball court: 40 × 20 m (larger than a basketball court)", "https://en.wikipedia.org/wiki/Handball"],
   city_density: ["List of EU cities by population within city limits (area, density)", "https://en.wikipedia.org/wiki/List_of_cities_in_the_European_Union_by_population_within_city_limits"],
   eurostat_pop: ["Eurostat: population structure and ageing (share of young people by country)", "https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Population_structure_and_ageing"],
@@ -42,21 +45,33 @@ const SOURCES = {
 
 // ---------------------------------------------------------------------
 // Sports compared on the "Why basketball" tab.
-// footprint = court + safety run-off (the floor one court really needs, m)
-// group     = students one coach can run on one court in a session
-// courtCost = indicative fit-out of ONE indoor court inside a rented shell
+// court = official playing area [length, width] in metres.
+// Layout rules (metres, all editable on the site), used to work out how
+// many courts physically fit in a given hall:
+//   side = clearance from the outer wall to the first/last court's side line
+//   gap  = space between two neighbouring courts (a shared wall for squash)
+//   endF = clearance at the front end (front wall for squash)
+//   endB = clearance at the back end (squash: glass back wall + corridor)
+//   mirror = two rows can face each other and share the back space
+// group     = kids one coach can run on one court in a session
+// courtCost = indicative fit-out of ONE court inside a rented building
 // ---------------------------------------------------------------------
 const SPORTS = [
-  { k: "basketball", name: "Basketball", icon: "🏀", court: [28, 15],     footprint: [32, 19],    ceiling: 7,   group: 30, range: "20–40", courtCost: 120000, color: "#ff7a1a", src: "court_bb",
-    note: "Sprung wooden floor, 2 competition hoops + 4 side hoops, lighting, scoreboard." },
-  { k: "squash",     name: "Squash",     icon: "🎾", court: [9.75, 6.4],  footprint: [10.5, 7.2], ceiling: 6,   group: 5,  range: "4–6",   courtCost: 55000,  color: "#4da3ff", src: "court_sq",
-    note: "4 walls (glass back wall), sprung maple floor, lighting." },
-  { k: "badminton",  name: "Badminton",  icon: "🏸", court: [13.4, 6.1],  footprint: [16.4, 9.1], ceiling: 9,   group: 8,  range: "6–12",  courtCost: 18000,  color: "#2ecc71", src: "court_bd",
-    note: "Synthetic court mat, posts and net, glare-free lighting. Needs a 9 m ceiling." },
-  { k: "padel",      name: "Padel",      icon: "🥎", court: [20, 10],     footprint: [21, 11],    ceiling: 7,   group: 4,  range: "4–6",   courtCost: 35000,  color: "#e0b0ff", src: "court_pd",
-    note: "Glass-and-mesh enclosure, artificial turf, lighting." },
-  { k: "pickleball", name: "Pickleball", icon: "🏓", court: [13.41, 6.1], footprint: [18.3, 9.1], ceiling: 5.5, group: 8,  range: "8–12",  courtCost: 12000,  color: "#ffd166", src: "court_pb",
-    note: "Court surface or mat, net, line marking, lighting." },
+  { k: "basketball", name: "Basketball", icon: "🏀", court: [28, 15], side: 2, gap: 2, endF: 2, endB: 2, mirror: false,
+    ceiling: 7, group: 30, range: "20–40", courtCost: 120000, color: "#ff7a1a", src: ["court_bb"],
+    note: "Court 28 × 15 m with 2 m safety run-off all round (FIBA)." },
+  { k: "squash", name: "Squash", icon: "🎾", court: [9.75, 6.4], side: 0.25, gap: 0.25, endF: 0.25, endB: 2.15, mirror: true,
+    ceiling: 5.64, group: 5, range: "4–6", courtCost: 55000, color: "#4da3ff", src: ["court_sq", "sq_build"],
+    note: "Court 9.75 × 6.4 m inside 25 cm walls that neighbouring courts share, plus 2.15 m behind for the glass back wall and an access/viewing corridor. Two rows can share one corridor, but that needs ~22 m of depth." },
+  { k: "badminton", name: "Badminton", icon: "🏸", court: [13.4, 6.1], side: 1.5, gap: 2, endF: 2, endB: 2, mirror: false,
+    ceiling: 7.5, group: 8, range: "6–12", courtCost: 18000, color: "#2ecc71", src: ["court_bd", "bd_design"],
+    note: "Court 13.4 × 6.1 m with 2 m behind each baseline and 2 m between courts (Sport England). At 1.5 m between courts a 4th one squeezes in. 7.5 m ceiling for club play, 9 m for international." },
+  { k: "padel", name: "Padel", icon: "🥎", court: [20, 10], side: 0.5, gap: 0.5, endF: 0.5, endB: 0.5, mirror: false,
+    ceiling: 7, group: 4, range: "4–6", courtCost: 35000, color: "#e0b0ff", src: ["court_pd"],
+    note: "Enclosed 20 × 10 m glass-and-mesh court with 0.5 m access around it. At 20 m long it can't fit across a 19 m hall, so only one fits." },
+  { k: "pickleball", name: "Pickleball", icon: "🏓", court: [13.41, 6.1], side: 1.52, gap: 3.05, endF: 2.44, endB: 2.44, mirror: false,
+    ceiling: 5.5, group: 8, range: "8–12", courtCost: 12000, color: "#ffd166", src: ["court_pb", "pb_rules"],
+    note: "Court 44 × 20 ft (13.41 × 6.1 m), each on the USA Pickleball minimum 30 × 60 ft playing area. At the 34 × 64 ft size recommended for new builds, only 1 fits in 32 × 19 m." },
 ];
 
 // ---------------------------------------------------------------------

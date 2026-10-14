@@ -641,18 +641,56 @@ let WHY = { area: 608, coach: 35, ...(saved.WHY || {}) };
 $("whyArea").value = WHY.area; $("whyCoach").value = WHY.coach;
 $("whyArea").addEventListener("input", e => { WHY.area = Number(e.target.value); save(); renderWhy(); renderDeck(); });
 $("whyCoach").addEventListener("input", e => { WHY.coach = Number(e.target.value); save(); renderWhy(); renderDeck(); });
-$("whySrc").innerHTML = srcDetails([...SPORTS.map(s => s.src), "est"], "<li>Fit-out costs are rough estimates for one indoor court inside a rented building, not including the building itself</li>");
+$("whySrc").innerHTML = srcDetails([...SPORTS.flatMap(s => s.src), "est"], "<li>Fit-out costs are rough estimates for one indoor court inside a rented building, not including the building itself</li>");
 
 function spaceDims(area) { const w = Math.sqrt(area * 32 / 19); return [w, area / w]; }
-function fitCourts(sport, area) {
-  const [W, H] = spaceDims(area), [a, b] = sport.footprint;
-  const opt = (fw, fh) => ({ cols: Math.floor(W / fw), rows: Math.floor(H / fh), fw, fh });
-  const o1 = opt(a, b), o2 = opt(b, a), best = o1.cols * o1.rows >= o2.cols * o2.rows ? o1 : o2;
-  return { ...best, count: best.cols * best.rows, W, H, rotated: best === o2 };
+// Floor one court really needs (court + its share of clearances), m × m.
+const sportFootprint = s => [s.court[1] + Math.max(s.gap, 2 * s.side), s.court[0] + s.endF + s.endB];
+// How many courts physically fit, using each sport's layout rules. Tries
+// courts side by side along the long wall and along the short wall.
+function fitCourts(s, area) {
+  const [W, H] = spaceDims(area), [cl, cw] = s.court;
+  const across = len => Math.max(0, Math.floor((len - 2 * s.side + s.gap) / (cw + s.gap)));
+  const rowDepth = cl + s.endF + s.endB, pairDepth = 2 * (cl + s.endF) + s.endB;
+  const rowsIn = len => {
+    if (!s.mirror) return Math.max(0, Math.floor(len / rowDepth));
+    const pairs = Math.floor(len / pairDepth);
+    return pairs * 2 + (len - pairs * pairDepth >= rowDepth ? 1 : 0);
+  };
+  const a = { n: across(W), rows: rowsIn(H), alongX: true };
+  const b = { n: across(H), rows: rowsIn(W), alongX: false };
+  const best = a.n * a.rows >= b.n * b.rows ? a : b;
+  return { ...best, count: best.n * best.rows, W, H };
+}
+// Court rectangles (and squash corridors) in metres, centred in the hall.
+function courtLayout(s, fit) {
+  const [cl, cw] = s.court, { n, rows, alongX, W, H } = fit;
+  const usedAcross = n ? 2 * s.side + n * cw + (n - 1) * s.gap : 0;
+  const ys = [], corridors = [];
+  let used = 0;
+  for (let r = 0; r < rows; r++) {
+    if (s.mirror && r % 2 === 1) {                        // mirrored partner shares the corridor
+      ys.push({ y: used + s.endB, flip: true });
+      used += s.endB + cl + s.endF;
+    } else {
+      ys.push({ y: used + s.endF, flip: false });
+      const lastSingle = !s.mirror || r === rows - 1;
+      corridors.push({ y: used + s.endF + cl, d: s.endB });
+      used += s.endF + cl + (lastSingle ? s.endB : 0);
+    }
+  }
+  const spanX = alongX ? W : H, spanY = alongX ? H : W;
+  const ox = (spanX - usedAcross) / 2, oy = (spanY - used) / 2;
+  const courts = [];
+  for (let i = 0; i < n; i++) for (const row of ys)
+    courts.push({ x: ox + s.side + i * (cw + s.gap), y: oy + row.y, w: cw, l: cl });
+  const runs = s.mirror ? corridors.map(c => ({ x: ox, y: oy + c.y, w: usedAcross, l: c.d })) : [];
+  const swap = r => alongX ? { x: r.x, y: r.y, w: r.w, h: r.l } : { x: r.y, y: r.x, w: r.l, h: r.w };
+  return { courts: courts.map(swap), corridors: runs.map(swap) };
 }
 function sportMetrics(s, area, coachRate) {
-  const fit = fitCourts(s, area), fpArea = s.footprint[0] * s.footprint[1];
-  return { s, fit, fpArea, students: fit.count * s.group, investment: fit.count * s.courtCost, coaches: fit.count,
+  const fit = fitCourts(s, area), fp = sportFootprint(s), fpArea = fp[0] * fp[1];
+  return { s, fit, fp, fpArea, students: fit.count * s.group, investment: fit.count * s.courtCost, coaches: fit.count,
     perCoach: s.group, coachPerKidHr: coachRate / s.group, invPerPlace: s.courtCost / s.group,
     m2PerKid: fpArea / s.group, invPerM2: s.courtCost / fpArea, usedPct: fit.count * fpArea / area };
 }
@@ -660,20 +698,26 @@ const allSportMetrics = () => SPORTS.map(s => sportMetrics(s, WHY.area, WHY.coac
 function sportSvg(m) {
   const { fit, s } = m, pad = 0.6, k = 10;
   const VW = (fit.W + pad * 2) * k, VH = (fit.H + pad * 2) * k;
+  const L = layoutCache(m);
   let g = `<rect x="${pad * k}" y="${pad * k}" width="${fit.W * k}" height="${fit.H * k}" fill="none" stroke="#3a404c" stroke-width="3" stroke-dasharray="10 6"/>`;
-  const [cw, ch] = fit.rotated ? [s.court[1], s.court[0]] : s.court;
-  for (let r = 0; r < fit.rows; r++) for (let c = 0; c < fit.cols; c++) {
-    const x0 = pad + c * fit.fw, y0 = pad + r * fit.fh, cx = x0 + (fit.fw - cw) / 2, cy = y0 + (fit.fh - ch) / 2;
-    g += `<rect x="${x0 * k}" y="${y0 * k}" width="${fit.fw * k}" height="${fit.fh * k}" fill="${s.color}" fill-opacity=".07"/>`;
-    g += `<rect x="${cx * k}" y="${cy * k}" width="${cw * k}" height="${ch * k}" rx="4" fill="${s.color}" fill-opacity=".18" stroke="${s.color}" stroke-width="2.5"/>`;
-    const n = s.group, cols = Math.max(1, Math.round(Math.sqrt(n * cw / ch))), rows = Math.ceil(n / cols);
-    const dx = cw / cols, dy = ch / rows, rad = Math.min(dx, dy) * 0.3 * k;
-    for (let i = 0; i < n; i++) g += `<circle cx="${(cx + dx * (i % cols + .5)) * k}" cy="${(cy + dy * (Math.floor(i / cols) + .5)) * k}" r="${rad}" fill="${s.color}"/>`;
+  L.corridors.forEach(c => g += `<rect x="${(pad + c.x) * k}" y="${(pad + c.y) * k}" width="${c.w * k}" height="${c.h * k}" fill="#94a3b8" fill-opacity=".10" stroke="#94a3b8" stroke-opacity=".5" stroke-dasharray="5 4"/>` +
+    (Math.max(c.w, c.h) * k > 90 ? `<text x="${(pad + c.x + c.w / 2) * k}" y="${(pad + c.y + c.h / 2) * k + 5}" fill="#94a3b8" font-size="13" text-anchor="middle"${c.h > c.w ? ` transform="rotate(-90 ${(pad + c.x + c.w / 2) * k} ${(pad + c.y + c.h / 2) * k})"` : ""}>access & viewing corridor</text>` : ""));
+  L.courts.forEach(c => {
+    const x = (pad + c.x) * k, y = (pad + c.y) * k, w = c.w * k, h = c.h * k;
+    // clearance zone around the court (half the gap to neighbours)
+    const gx = (s.gap / 2) * k;
+    g += `<rect x="${x - gx}" y="${y - gx}" width="${w + 2 * gx}" height="${h + 2 * gx}" fill="${s.color}" fill-opacity=".06"/>`;
+    g += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${s.color}" fill-opacity=".18" stroke="${s.k === "squash" ? "#cbd5e1" : s.color}" stroke-width="${s.k === "squash" ? 4 : 2.5}"/>`;
+    const n = s.group, cols = Math.max(1, Math.round(Math.sqrt(n * c.w / c.h))), rows = Math.ceil(n / cols);
+    const dx = c.w / cols, dy = c.h / rows, rad = Math.min(dx, dy) * 0.3 * k;
+    for (let i = 0; i < n; i++) g += `<circle cx="${x + dx * (i % cols + .5) * k}" cy="${y + dy * (Math.floor(i / cols) + .5) * k}" r="${rad}" fill="${s.color}"/>`;
     const cs = Math.max(rad * 2, 7);
-    g += `<rect x="${(cx + cw / 2) * k - cs / 2}" y="${cy * k - cs / 2}" width="${cs}" height="${cs}" rx="2" fill="#fff"/>`;
-  }
+    g += `<rect x="${x + w / 2 - cs / 2}" y="${y - cs / 2}" width="${cs}" height="${cs}" rx="2" fill="#fff"/>`;
+  });
+  if (!L.courts.length) g += `<text x="${VW / 2}" y="${VH / 2}" fill="#ef4444" font-size="16" font-weight="800" text-anchor="middle">No court fits this space</text>`;
   return `<svg viewBox="0 0 ${VW.toFixed(0)} ${VH.toFixed(0)}" role="img" aria-label="${s.name}: ${fit.count} courts">${g}</svg>`;
 }
+const layoutCache = m => courtLayout(m.s, m.fit);
 function renderWhy() {
   $("whyAreaV").textContent = fmtInt(WHY.area) + " m²";
   $("whyCoachV").textContent = "€" + WHY.coach;
@@ -682,6 +726,7 @@ function renderWhy() {
     <div class="hd"><span>${m.s.icon} ${m.s.name}</span><span class="tag${m.s.k === "basketball" ? " acc" : ""}">${plural(m.fit.count, "court", "courts")}</span></div>
     ${sportSvg(m)}
     <div class="trio"><div><b>${m.students}</b><span>kids</span></div><div><b>${m.coaches}</b><span>${m.coaches === 1 ? "coach" : "coaches"}</span></div><div><b>${short(m.investment)}</b><span>fit-out</span></div></div>
+    <p class="help sport-note">${m.s.note}</p>
   </div>`).join("");
   const chart = (title, key, fmt, lowerBetter) => {
     const max = Math.max(...ms.map(m => m[key])) || 1;
@@ -1099,7 +1144,7 @@ function restoreData() {
   CONVERSION_KIT.forEach((r, i) => r[1] = PRISTINE.CONVERSION_KIT[i][1]);
   LEAN_FITOUT.forEach((r, i) => r[1] = PRISTINE.LEAN_FITOUT[i][1]);
   STORE_ITEMS.forEach((r, i) => r[2] = PRISTINE.STORE_ITEMS[i][2]);
-  SPORTS.forEach((s, i) => { s.courtCost = PRISTINE.SPORTS[i].courtCost; s.group = PRISTINE.SPORTS[i].group; });
+  SPORTS.forEach((s, i) => ["courtCost", "group", "side", "gap", "endF", "endB"].forEach(f => s[f] = PRISTINE.SPORTS[i][f]));
   COUNTRIES.forEach((c, i) => { c.labour = PRISTINE.COUNTRIES[i].labour; Object.assign(c.s, PRISTINE.COUNTRIES[i].s); });
   CITIES.forEach(c => Object.assign(c.s, PRISTINE.CITY_S[c.name]));
   Object.assign(PN_FIXED, PRISTINE.PN_FIXED);
@@ -1114,7 +1159,7 @@ function applyEdit(path, v) {
   if (kind === "lean" && LEAN_FITOUT[+a]) { LEAN_FITOUT[+a][1] = v; return true; }
   if (kind === "store" && STORE_ITEMS[+a]) { STORE_ITEMS[+a][2] = v; return true; }
   const sp = kind === "sport" && SPORTS.find(s => s.k === a);
-  if (sp && (b === "courtCost" || b === "group")) { sp[b] = b === "group" ? Math.max(1, Math.round(v)) : v; return true; }
+  if (sp && ["courtCost", "group", "side", "gap", "endF", "endB"].includes(b)) { sp[b] = b === "group" ? Math.max(1, Math.round(v)) : v; return true; }
   const city = kind === "city" && CITIES.find(c => c.name === a);
   if (city && b in city.s) { city.s[b] = Math.min(10, v); return true; }
   const ctry = kind === "country" && COUNTRIES.find(c => c.code === a);
@@ -1197,9 +1242,11 @@ function renderEditables(m) {
      <tr class="total"><td>Store room needed (sets the store-room size)</td><td></td><td>${storeNeeded()} m²</td></tr>`;
   $("storeReset").innerHTML = resetBtn("store.");
   // Sports
-  $("sportEdit").innerHTML = `<div class="table-scroll"><table><thead><tr><th>Sport</th><th>Kids per coach</th><th>Fit-out per court (€)</th></tr></thead><tbody>` +
-    SPORTS.map(s => `<tr><td>${s.icon} ${s.name}</td><td>${cellIn(`sport.${s.k}.group`, s.group, s.name + ": kids per coach")}</td><td>${cellIn(`sport.${s.k}.courtCost`, s.courtCost, s.name + ": fit-out per court")}</td></tr>`).join("") +
-    `</tbody></table></div>` + resetBtn("sport.");
+  $("sportEdit").innerHTML = `<div class="table-scroll"><table><thead><tr><th>Sport</th><th>Kids per coach</th><th>Fit-out per court (€)</th>
+      <th>Wall → first court (m)</th><th>Between courts (m)</th><th>Front clearance (m)</th><th>Back clearance (m)</th><th>Courts that fit</th></tr></thead><tbody>` +
+    SPORTS.map(sp => `<tr><td>${sp.icon} ${sp.name}</td>${["group", "courtCost", "side", "gap", "endF", "endB"].map(f =>
+      `<td>${cellIn(`sport.${sp.k}.${f}`, sp[f], `${sp.name}: ${f}`)}</td>`).join("")}<td><b>${fitCourts(sp, WHY.area).count}</b></td></tr>`).join("") +
+    `</tbody></table></div><p class="help">Clearances in metres (they convert in the text, not in these boxes). Squash “back” includes the glass back wall and an access corridor.</p>` + resetBtn("sport.");
   // Partner network fixed costs
   const PNF = [["setup", "Kit & onboarding per venue (€)"], ["tech", "Software per venue / month (€)"], ["marketing", "Marketing per venue / month (€)"],
     ["manager", "Area manager salary / month (€)"], ["managerPer", "Venues per area manager"], ["launch", "Network launch cost (€)"], ["sessionsPerKid", "Sessions per kid per week"]];
