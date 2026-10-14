@@ -73,8 +73,11 @@ document.addEventListener("input", e => { if (e.target.type === "range") paintRa
 // ---------------------------------------------------------------------
 const STORE_KEY = "bball-planner-v5";
 const saved = (() => { try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); } catch { return {}; } })();
+// Cloud sync (cloud.js) sets this to be told about every change.
+let onStateChange = null;
 function save() {
   try { localStorage.setItem(STORE_KEY, JSON.stringify({ A, W, BW, WHY, TT, TTF, PN, slide, preset })); } catch {}
+  if (onStateChange) onStateChange();
 }
 
 // ---------------------------------------------------------------------
@@ -889,6 +892,41 @@ document.addEventListener("keydown", e => {
   if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") { e.preventDefault(); goSlide(slide + 1); }
   if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); goSlide(slide - 1); }
 });
+
+// =====================================================================
+// Whole-plan state: read it (for cloud save) and apply it (cloud load).
+// Loaded data is untrusted, so every value is coerced to a number or a
+// known activity key before it reaches the page.
+// =====================================================================
+function getState() { return { A, W, BW, WHY, TT, TTF, PN, preset }; }
+function numbersFrom(src, defaults) {
+  const out = { ...defaults };
+  if (src && typeof src === "object") for (const k of Object.keys(defaults)) {
+    const v = Number(src[k]);
+    if (src[k] !== null && src[k] !== "" && Number.isFinite(v)) out[k] = v;
+  }
+  return out;
+}
+function applyState(s) {
+  if (!s || typeof s !== "object") return;
+  A = numbersFrom(s.A, DEFAULTS);
+  W = numbersFrom(s.W, Object.fromEntries(FACTORS.map(f => [f.k, f.w])));
+  BW = numbersFrom(s.BW, Object.fromEntries(BIZ_FACTORS.map(f => [f.k, f.w])));
+  WHY = numbersFrom(s.WHY, { area: 608, coach: 35 });
+  TTF = numbersFrom(s.TTF, { fill: 60 });
+  PN = numbersFrom(s.PN, Object.fromEntries(PN_LEVERS.map(l => [l.k, l.v])));
+  TT = Array.isArray(s.TT) && s.TT.length === 7 && s.TT.every(r => Array.isArray(r) && r.length === TT_HOURS)
+    ? s.TT.map(r => r.map(k => (typeof k === "string" && ACTIVITIES[k]) ? k : "empty"))
+    : TT_DEFAULT.map(r => r.slice());
+  preset = PRESETS[s.preset] ? s.preset : "";
+  LEVERS.forEach(l => $("l_" + l.k).value = A[l.k]);
+  PN_LEVERS.forEach(l => $("pn_" + l.k).value = PN[l.k]);
+  FACTORS.forEach(f => $("w_" + f.k).value = W[f.k]);
+  BIZ_FACTORS.forEach(f => $("bw_" + f.k).value = BW[f.k]);
+  $("fill").value = TTF.fill; $("whyArea").value = WHY.area; $("whyCoach").value = WHY.coach;
+  buildAssumptions();
+  save(); renderWhy(); renderAll(); paintAll();
+}
 
 // =====================================================================
 // Boot

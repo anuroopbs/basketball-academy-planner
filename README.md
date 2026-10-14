@@ -33,3 +33,18 @@ GitHub Pages redeploys in about a minute.
 - `index.html`: page structure. After editing any asset, bump the `?v=` number on its link so browsers fetch the new file
 
 Figures without an outside source are labelled as planner estimates and can be changed in the site.
+
+## Backend (Supabase)
+
+- Project: **Basketball Academy Planner** (`hzvuzhrdxenmotuehnpz`, EU · Ireland, free plan)
+- Feature: **☁️ Save to cloud** in the header saves the whole plan (levers, timetable, weights) and gives
+  a **view link** (`?s=<id>`, read-only copy, safe to share) and a private **edit link** (`?s=<id>&k=<token>`, autosaves).
+- Security: the `scenarios` table is closed to the API; the site can only call 4 functions
+  (`create_scenario`, `get_scenario`, `update_scenario`, `delete_scenario`). Update/delete require the edit token.
+  Loaded data is coerced to numbers / known keys before rendering. Schema: `supabase/001_scenarios.sql`.
+- Code: `assets/cloud.js`. The publishable key in it is meant to be public.
+
+## Hosting
+
+Front end: **GitHub Pages** (free, redeploys on every push to `main`). Back end: **Supabase**.
+No server to run.

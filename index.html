@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=6">
+<link rel="stylesheet" href="assets/styles.css?v=7">
 </head>
 <body>
 
@@ -33,10 +33,12 @@
       <button class="tab" role="tab" data-tab="params">Parameters</button>
     </nav>
     <span class="checked" id="checked"></span>
+    <button class="cloud-btn" id="cloudBtn" aria-label="Cloud save and share"></button>
   </div>
 </header>
 
 <main class="wrap">
+<div id="cloudBanner"></div>
 
 <!-- ================= MISSION ================= -->
 <section class="panel" id="p-mission">
@@ -311,7 +313,15 @@
   <a href="https://github.com/anuroopbs/basketball-academy-planner" target="_blank" rel="noopener">Source code on GitHub ↗</a></footer>
 </main>
 
-<script src="assets/data.js?v=6"></script>
-<script src="assets/app.js?v=6"></script>
+<div class="drawer" id="cloudDrawer" hidden>
+  <aside class="drawer-panel" role="dialog" aria-label="Cloud save and share">
+    <div class="drawer-head"><div><div class="eyebrow">Cloud</div><h2>Save & share this plan</h2></div><button class="btn" data-close aria-label="Close">✕</button></div>
+    <div id="cloudBody"></div>
+  </aside>
+</div>
+
+<script src="assets/data.js?v=7"></script>
+<script src="assets/app.js?v=7"></script>
+<script src="assets/cloud.js?v=7"></script>
 </body>
 </html>
