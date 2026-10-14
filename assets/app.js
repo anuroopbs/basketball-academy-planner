@@ -721,7 +721,7 @@ $("bizSources").innerHTML = srcItems(["eurostat_lc", "eurostat_news", "taxfound"
 function countryCard(c, rank) {
   return `<div class="box">
     <div class="rank">${rank ? `<div class="rank-num">${rank}</div>` : ""}<div style="flex:1">
-      <h3>${c.flag} ${c.name} <span class="muted small">· ${c.city}</span></h3>
+      <h3>${c.name} <span class="muted small">· ${c.city}</span></h3>
       <div class="small">Ease score <span class="score">${c.ease.toFixed(1)}</span> / 100</div>
       <div class="bar"><span style="width:${c.ease}%"></span></div>
     </div></div>
@@ -748,17 +748,17 @@ function matrixSvg(list) {
   let g = `<rect x="${X(mx)}" y="${T}" width="${Wd - R - X(mx)}" height="${Y(my) - T}" fill="#2ecc71" fill-opacity=".08"/>`;
   g += `<line x1="${X(mx)}" x2="${X(mx)}" y1="${T}" y2="${H - B}" stroke="#3a404c" stroke-dasharray="4 4"/>
         <line x1="${L}" x2="${Wd - R}" y1="${Y(my)}" y2="${Y(my)}" stroke="#3a404c" stroke-dasharray="4 4"/>`;
-  const q = (x, y, t, c, a) => `<text x="${x}" y="${y}" fill="${c}" font-size="12" font-weight="700" text-anchor="${a}">${t}</text>`;
+  const q = (x, y, t, c, a) => `<text x="${x}" y="${y}" fill="${c}" font-size="13" font-weight="700" text-anchor="${a}">${t}</text>`;
   g += q(Wd - R - 6, T + 16, "LAUNCH FIRST: easy + strong demand", "#2ecc71", "end");
   g += q(L + 6, T + 16, "BIG PRIZE, HARDER SETUP", "#ffd166", "start");
   g += q(Wd - R - 6, H - B - 8, "EASY BUT SMALLER DEMAND", "#4da3ff", "end");
   g += q(L + 6, H - B - 8, "LATER", "#9aa1ad", "start");
-  g += `<text x="${(L + Wd - R) / 2}" y="${H - 10}" fill="#9aa1ad" font-size="12" text-anchor="middle">Ease of starting the business → (score /100)</text>
-        <text x="16" y="${(T + H - B) / 2}" fill="#9aa1ad" font-size="12" text-anchor="middle" transform="rotate(-90 16 ${(T + H - B) / 2})">Demand in best city → (score /100)</text>`;
+  g += `<text x="${(L + Wd - R) / 2}" y="${H - 10}" fill="#9aa1ad" font-size="14" text-anchor="middle">Ease of starting the business → (score /100)</text>
+        <text x="16" y="${(T + H - B) / 2}" fill="#9aa1ad" font-size="14" text-anchor="middle" transform="rotate(-90 16 ${(T + H - B) / 2})">Demand in best city → (score /100)</text>`;
   list.forEach(c => {
     const cx = X(c.ease), cy = Y(c.demand);
-    g += `<circle cx="${cx}" cy="${cy}" r="7" fill="#ff7a1a" stroke="#111" stroke-width="2"/>
-      <text x="${cx + 10}" y="${cy + 4}" fill="#f2f3f5" font-size="12.5" font-weight="600">${c.flag} ${c.bestCity}</text>`;
+    g += `<circle cx="${cx}" cy="${cy}" r="8" fill="#ff7a1a" stroke="#111" stroke-width="2"/>
+      <text x="${cx + 10}" y="${cy + 4}" fill="#f2f3f5" font-size="15" font-weight="700">${c.bestCity}</text>`;
   });
   return `<svg viewBox="0 0 ${Wd} ${H}" role="img" aria-label="Ease of starting a business vs demand">${g}</svg>
     <div class="small muted" style="padding:0 6px">Dashed lines = averages. Change weights on Best cities or below and the dots move.</div>`;
@@ -771,7 +771,7 @@ function renderBusiness() {
   $("bizAll").innerHTML = list.map(c => countryCard(c, 0)).join("");
   $("bizMatrix").innerHTML = matrixSvg(list);
   $("bizTable").innerHTML = `<thead><tr><th>#</th><th class="l">Country</th><th>Ease</th>${BIZ_FACTORS.map(f => `<th>${f.label}</th>`).join("")}<th>€/hour</th><th>Best-city demand</th></tr></thead><tbody>` +
-    list.map((c, i) => `<tr${i < 5 ? ' class="hl"' : ""}><td>${i + 1}</td><td class="l">${c.flag} <b>${c.name}</b></td><td class="score">${c.ease.toFixed(1)}</td>
+    list.map((c, i) => `<tr${i < 5 ? ' class="hl"' : ""}><td>${i + 1}</td><td class="l"><b>${c.name}</b></td><td class="score">${c.ease.toFixed(1)}</td>
       ${BIZ_FACTORS.map(f => `<td>${c.sc[f.k].toFixed(f.k === "labour" ? 1 : 0)}</td>`).join("")}<td>${c.labour.toFixed(1)}</td><td>${c.demand.toFixed(1)}</td></tr>`).join("") + "</tbody>";
 }
 
@@ -853,7 +853,7 @@ function renderMission(m) {
     { label: "Kids per coach", value: A.group, sub: "vs 4–8 in racket sports", go: "why" },
     { label: "Hub monthly profit", value: sign(m.profit), sub: m.payback ? `Payback ${Math.ceil(m.payback)} months` : "Not profitable yet", go: "calc" },
     { label: "Top demand city", value: city.name, sub: `Score ${city.score.toFixed(0)}/100`, go: "cities" },
-    { label: "Easiest country to start", value: `${easy.flag} ${easy.name}`, sub: `Ease ${easy.ease.toFixed(0)}/100`, go: "business" },
+    { label: "Easiest country to start", value: easy.name, sub: `Ease ${easy.ease.toFixed(0)}/100`, go: "business" },
   ].map(cardHtml).join("");
 }
 
@@ -917,7 +917,7 @@ function buildSlides(m) {
      ${cards([{ hero: true, label: "Network monthly profit", value: sign(x.profit) }, { label: "Investment", value: short(x.investment) },
        { label: "Investment per kid", value: eur(x.kidsReached ? x.investment / x.kidsReached : 0) }, { label: "Payback", value: x.payback ? `${Math.ceil(x.payback)} months` : "Never" }])}`,
     `<div class="kicker">Where</div><h2>Launch where it's easy and demand is strong</h2>
-     ${cards(launch.map((c, i) => ({ hero: i === 0, label: `${c.flag} ${c.name}`, value: c.bestCity, sub: `Ease ${c.ease.toFixed(0)} · demand ${c.demand.toFixed(0)}` })))}
+     ${cards(launch.map((c, i) => ({ hero: i === 0, label: c.name, value: c.bestCity, sub: `Ease ${c.ease.toFixed(0)} · demand ${c.demand.toFixed(0)}` })))}
      <p class="mt">Top demand cities: ${cities.map(c => c.name).join(", ")}. Easiest countries to start: ${countries.slice(0, 3).map(c => c.name).join(", ")}.</p>`,
     `<div class="kicker">Funding</div><h2>Grants reduce the founder capital needed</h2>
      <ul><li><b>Erasmus+ Sport small-scale:</b> €30k or €60k.</li><li><b>Erasmus+ Sport cooperation:</b> €120k / €250k / €400k.</li>
