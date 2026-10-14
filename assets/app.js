@@ -351,12 +351,16 @@ function renderCalc(m) {
     ]],
     ["Unit economics", [
       { label: "Lifetime value / kid", value: eur(m.ltv), sub: `${m.lifetimeMonths.toFixed(0)} months average stay` },
-      { label: "Lifetime value ÷ acquisition cost", value: P.cac ? (m.ltv / P.cac).toFixed(1) + "×" : "∞", sub: "Above 3× is healthy" },
+      { label: "Value ÷ acquisition cost", value: P.cac ? (m.ltv / P.cac).toFixed(1) + "×" : "∞", sub: "Above 3× is healthy" },
       { label: "Acquisition payback", value: P.cac ? (P.cac / P.kidsFee).toFixed(1) + " mo" : "0", sub: "Months of fees" },
       { label: "Revenue / m² / yr", value: eur(m.revenue * 12 / m.totalArea), sub: "How hard the space works" },
       { label: "Cost / member / mo", value: eur(m.monthlyCost / Math.max(1, m.members + P.adults)), sub: "All members" },
     ]],
   ];
+  const share = m.revenue ? m.tt.extraMonthlyRev / m.revenue : 0;
+  $("calcRisk").innerHTML = share > 0.25 ? `<div class="callout" style="margin:4px 0 6px"><div>⚠️</div><div><b>${pct(share)} of revenue comes from off-peak multi-use</b>
+    (yoga, badminton, hires…). It's the least proven income until a pilot confirms it. Stress-test it with the <b>Cautious</b> scenario or lower the
+    booking rate on the <a href="#timetable">Timetable</a>.</div></div>` : "";
   $("calcKpis").innerHTML = groups.map(([t, list]) => `<div class="kpi-group-title">${t}</div><div class="kpis">${kpis(list)}</div>`).join("");
   $("occChart").innerHTML = occChartSvg(m);
   $("revDonut").innerHTML = donut(m.streams.map(([l, v], i) => ({ label: l, value: v, color: PALETTE[i] })), short(m.revenue), "per month");
@@ -847,7 +851,7 @@ function buildSlides(m) {
      ${donut(m.streams.map(([l, v], i) => ({ label: l, value: v, color: PALETTE[i] })), short(m.revenue), "per month")}`,
     `<div class="eyebrow">Unit economics & break-even</div><h2>${pr >= 0 ? "Profitable" : "Loss-making"} at ${P.occ}% occupancy</h2>
      ${K([{ hero: true, label: "Profit / month", value: sign(pr) }, { label: "Payback", value: m.payback ? `${Math.ceil(m.payback)} mo` : "Never" },
-       { label: "Break-even occupancy", value: beoText(beo) }, { label: "Lifetime value ÷ acquisition cost", value: P.cac ? (m.ltv / P.cac).toFixed(1) + "×" : "∞" },
+       { label: "Break-even occupancy", value: beoText(beo) }, { label: "Value ÷ acquisition cost", value: P.cac ? (m.ltv / P.cac).toFixed(1) + "×" : "∞" },
        { label: "Kids", value: fmtInt(m.kids) }, { label: "Fee", value: eur(P.kidsFee) + "/mo" }])}
      <div class="chart" style="margin-top:12px;max-width:640px">${occChartSvg(m)}</div>`,
     `<div class="eyebrow">Partner venues</div><h2>${PN.venues} venues, ${fmtInt(x.kidsReached)} kids, no buildings to buy</h2>
