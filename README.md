@@ -44,6 +44,13 @@ Figures without an outside source are labelled as planner estimates and can be c
   Loaded data is coerced to numbers / known keys before rendering. Schema: `supabase/001_scenarios.sql`.
 - Code: `assets/cloud.js`. The publishable key in it is meant to be public.
 
+### Sign-in
+- Supabase Auth, username + password. A username maps to the internal email `<username>@academy-planner.example` (nothing is ever emailed).
+- Accounts are created by the owner in the Supabase dashboard (Authentication → Users → Add user, “Auto confirm”).
+  Public sign-ups should be switched off so nobody else can create accounts.
+- Signed in: create plans and list your plans on any device. Signed out: use the planner and open shared view links.
+  Schema change: `supabase/002_accounts.sql`.
+
 ## Hosting
 
 Front end: **GitHub Pages** (free, redeploys on every push to `main`). Back end: **Supabase**.
