@@ -30,6 +30,6 @@ GitHub Pages redeploys in about a minute.
 - `assets/data.js`: all content, numbers and **sources** (every outside figure has a source key)
 - `assets/app.js`: calculators, charts, timetable, deck
 - `assets/styles.css`: styling
-- `index.html`: page structure
+- `index.html`: page structure. After editing any asset, bump the `?v=` number on its link so browsers fetch the new file
 
 Figures without an outside source are labelled as planner estimates and can be changed in the site.
