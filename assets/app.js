@@ -459,7 +459,7 @@ function cashChartSvg(R) {
 // beside it. bp = blueprint style (used on the Mission tab) with a grid,
 // dimension lines, doors and the entrance.
 function floorPlanSvg(P, bp = false) {
-  const k = 10, pad = bp ? 3.2 : 1;
+  const k = bp ? 24 : 10, pad = bp ? 3.2 : 1;      // blueprint drawn at a finer scale so labels stay small
   const cw = Math.sqrt(P.courtArea * 32 / 19), ch = P.courtArea / cw;
   const court = P.courtArea >= 600 ? [28, 15] : [Math.max(10, Math.min(26, cw - 2)), Math.max(6, Math.min(14, ch - 2))];
   const rooms = ROOMS.map(([key, label, icon, , color]) => ({ label, icon, color, a: P[key] || 0 })).filter(r => r.a > 0);
@@ -472,7 +472,7 @@ function floorPlanSvg(P, bp = false) {
   let g = bp ? `<rect x="0" y="0" width="${VW}" height="${VH}" fill="${bg}"/>` : "";
   if (bp) for (let i = 0; i <= Math.ceil(Wm); i++) g += `<line x1="${X0 + i * k}" x2="${X0 + i * k}" y1="${Y0}" y2="${Y0 + Hm * k}" stroke="#fff" stroke-opacity="${i % 5 ? .04 : .1}"/>`;
   if (bp) for (let j = 0; j <= Math.ceil(Hm); j++) g += `<line x1="${X0}" x2="${X0 + Wm * k}" y1="${Y0 + j * k}" y2="${Y0 + j * k}" stroke="#fff" stroke-opacity="${j % 5 ? .04 : .1}"/>`;
-  g += `<rect x="${X0}" y="${Y0}" width="${Wm * k}" height="${Hm * k}" fill="${bp ? "none" : "#0d1015"}" stroke="${wall}" stroke-width="${bp ? 4 : 3}"/>`;
+  g += `<rect x="${X0}" y="${Y0}" width="${Wm * k}" height="${Hm * k}" fill="${bp ? "none" : "#0d1015"}" stroke="${wall}" stroke-width="${bp ? 6 : 3}"/>`;
   // court
   const ox = pad + (cw - court[0]) / 2, oy = pad + (ch - court[1]) / 2, X = v => (ox + v) * k, Y = v => (oy + v) * k;
   const mid = court[1] / 2, arc = Math.min(6.6, mid - 0.4);

@@ -434,7 +434,7 @@ td.tier-row { color: #fca5a5; font-size: 11px; font-weight: 800; text-transform:
 tr.sec-row td { background: var(--s2); color: var(--accent-2); font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; text-align: left; padding: 6px 12px; }
 /* ---------- Blueprint ---------- */
 .bp-wrap { border-radius: 12px; overflow: hidden; border: 1px solid rgba(159,194,239,.25); background: #0b2545; }
-.bp-wrap svg { width: 100%; height: auto; display: block; }
+.bp-wrap svg { width: 100%; height: auto; display: block; max-height: 520px; }
 
 /* =====================================================================
    POLISH LAYER (v16): display type, depth, motion, insight banners
@@ -473,8 +473,8 @@ h1 { letter-spacing: -.035em; }
 /* Tabs: icons + fades at the edges */
 .tab .ti { margin-right: 6px; font-size: 13px; }
 .tab[aria-selected="true"] { box-shadow: 0 6px 18px -8px rgba(255,122,26,.8); }
-.tabs { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%);
-        mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%); padding: 0 6px; }
+.tabs { -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent 100%);
+        mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent 100%); padding: 0 6px; }
 
 /* Depth & hover */
 .card, .kpi, .lever-box, .stream, .phase, .sport, details.fold, .chart-box, .icon-card, .table-scroll { box-shadow: var(--shadow); }
