@@ -435,3 +435,103 @@ tr.sec-row td { background: var(--s2); color: var(--accent-2); font-size: 10.5px
 /* ---------- Blueprint ---------- */
 .bp-wrap { border-radius: 12px; overflow: hidden; border: 1px solid rgba(159,194,239,.25); background: #0b2545; }
 .bp-wrap svg { width: 100%; height: auto; display: block; }
+
+/* =====================================================================
+   POLISH LAYER (v16): display type, depth, motion, insight banners
+   ===================================================================== */
+:root {
+  --display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --shadow: 0 1px 0 rgba(255,255,255,.035) inset, 0 12px 32px -20px rgba(0,0,0,.85);
+  --glow: 0 0 0 1px rgba(255,122,26,.35), 0 14px 36px -18px rgba(255,122,26,.55);
+}
+body {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(900px 480px at 88% -8%, rgba(255,122,26,.14), transparent 60%),
+    radial-gradient(700px 460px at -8% 35%, rgba(59,130,246,.07), transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Cpath d='M48 0H0V48' fill='none' stroke='white' stroke-opacity='.028'/%3E%3C/svg%3E");
+  background-attachment: fixed;
+}
+::selection { background: rgba(255,122,26,.38); color: #fff; }
+* { scrollbar-width: thin; scrollbar-color: #2b313d transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: #2b313d; border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
+:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; border-radius: 6px; }
+
+/* Type */
+h1, h2, .hero-band h1, .slide h2, .slide .big, .kpi .v, .sb-item .v, .lever.main .lever-value, .rank-num, .phase .n { font-family: var(--display); }
+h1 { letter-spacing: -.035em; }
+.hero-band h1 { font-size: 32px; line-height: 1.12; letter-spacing: -.035em; }
+.hero-band h1 em { font-style: normal; background: linear-gradient(135deg, #ffb547, #ff6a00); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.kpi .v { font-weight: 700; letter-spacing: -.02em; }
+
+/* Brand mark */
+.brand .logo { background: none; width: 32px; height: 32px; filter: drop-shadow(0 4px 10px rgba(255,122,26,.45)); }
+.brand .logo svg { width: 32px; height: 32px; display: block; }
+.brand .name { font-family: var(--display); font-size: 16px; letter-spacing: -.01em; }
+
+/* Tabs: icons + fades at the edges */
+.tab .ti { margin-right: 6px; font-size: 13px; }
+.tab[aria-selected="true"] { box-shadow: 0 6px 18px -8px rgba(255,122,26,.8); }
+.tabs { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%);
+        mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%); padding: 0 6px; }
+
+/* Depth & hover */
+.card, .kpi, .lever-box, .stream, .phase, .sport, details.fold, .chart-box, .icon-card, .table-scroll { box-shadow: var(--shadow); }
+.card, .kpi, .stream, .phase, .sport { transition: border-color .2s, transform .2s, box-shadow .2s; }
+.stream:hover, .phase:hover, .sport:hover, .kpi.link:hover { transform: translateY(-2px); border-color: var(--line-2); }
+.kpi { background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0) 55%), var(--s1); }
+.kpi.hero { box-shadow: var(--glow); }
+.sport.win { box-shadow: var(--glow); }
+details.fold[open] { border-color: var(--line-2); }
+
+/* Hero: court-line artwork */
+.hero-band .ball { display: none; }
+.hero-band::before { content: ""; position: absolute; right: -60px; top: -40px; width: 420px; height: 420px; opacity: .16; pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Cg fill='none' stroke='%23ff9a3c' stroke-width='3'%3E%3Ccircle cx='200' cy='200' r='60'/%3E%3Ccircle cx='200' cy='200' r='14'/%3E%3Cline x1='0' y1='200' x2='400' y2='200'/%3E%3Crect x='140' y='300' width='120' height='100'/%3E%3Cpath d='M60 400 A 140 140 0 0 1 340 400'/%3E%3Crect x='140' y='0' width='120' height='100'/%3E%3Cpath d='M60 0 A 140 140 0 0 0 340 0'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat; }
+.hero-band > * { position: relative; }
+.hero-band .chips .chip { background: rgba(255,255,255,.04); }
+.hero-band .chips .chip:hover { border-color: var(--accent); color: #fff; }
+
+/* Insight banner (top of each tab) */
+.insight { display: flex; gap: 12px; align-items: center; margin: 0 0 16px; padding: 12px 16px; border-radius: 14px; font-size: 14.5px; line-height: 1.45; color: #f3e6d9;
+  background: linear-gradient(90deg, rgba(255,122,26,.16), rgba(255,122,26,.03) 70%), var(--s1); border: 1px solid rgba(255,122,26,.28); box-shadow: var(--shadow); }
+.insight:empty { display: none; }
+.insight .ic { flex: 0 0 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-size: 17px; background: rgba(255,122,26,.18); }
+.insight b { color: #ffd29a; font-weight: 700; }
+
+/* Roadmap: connected phases */
+.timeline { position: relative; }
+.timeline::before { content: ""; position: absolute; left: 30px; right: 30px; top: 27px; height: 2px; z-index: 0;
+  background: linear-gradient(90deg, var(--accent), rgba(255,181,71,.5) 60%, rgba(255,181,71,.08)); }
+.phase { z-index: 1; }
+.phase .n { box-shadow: 0 0 0 4px var(--s1); background: linear-gradient(135deg, #ff7a1a, #ffb547); color: #111; }
+
+/* Tables: keep the first column visible when scrolling sideways */
+.table-scroll th:first-child, .table-scroll td:first-child { position: sticky; left: 0; z-index: 1; background: var(--s1); }
+.table-scroll th:first-child { background: var(--s2); }
+.table-scroll tr.sel td:first-child { background: #2a1d12; }
+.table-scroll tr.total td:first-child, .table-scroll tr.sec-row td:first-child { background: var(--s2); }
+tbody tr:hover td { background-color: rgba(255,255,255,.018); }
+
+/* Deck */
+.slide::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: linear-gradient(var(--accent), var(--accent-2)); }
+
+/* Entry motion when a tab opens (not on every slider move) */
+@keyframes growX { from { transform: scaleX(0); } }
+@keyframes growY { from { transform: scaleY(0); } }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+.panel.enter .hbar > span { transform-origin: left; animation: growX .7s cubic-bezier(.2,.8,.2,1) both; }
+.panel.enter .daybar .col { transform-origin: bottom; animation: growY .7s cubic-bezier(.2,.8,.2,1) both; }
+.panel.enter .kpi, .panel.enter .card, .panel.enter .sport, .panel.enter .phase { animation: rise .45s ease both; }
+.panel.enter .kpis > :nth-child(2) { animation-delay: .03s; } .panel.enter .kpis > :nth-child(3) { animation-delay: .06s; }
+.panel.enter .kpis > :nth-child(4) { animation-delay: .09s; } .panel.enter .kpis > :nth-child(n+5) { animation-delay: .12s; }
+.panel.enter .chart svg, .panel.enter .donut svg { animation: rise .6s ease both; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+@media (max-width: 640px) {
+  .hero-band h1 { font-size: 23px; }
+  .hero-band::before { width: 260px; height: 260px; right: -70px; top: -50px; }
+  .insight { font-size: 13.5px; }
+  .timeline::before { display: none; }
+}

@@ -161,6 +161,7 @@ function showTab(name) {
   if (active && active.scrollIntoView) active.scrollIntoView({ block: "nearest", inline: "center" });
   window.scrollTo(0, 0);
   paintAll();
+  if (typeof enterPanel === "function") enterPanel($("p-" + name));
 }
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => showTab(t.dataset.tab)));
 document.addEventListener("click", e => {
@@ -850,6 +851,7 @@ function renderWhy() {
     "</tbody>";
   renderCostModal();
   renderSportEdit();
+  renderWhyInsight(ms);
 }
 
 // ---------- Cost breakdown (click any fit-out amount) ----------
@@ -1440,6 +1442,75 @@ window.addEventListener("scroll", () => { termPop.hidden = true; }, { passive: t
 if (typeof MutationObserver !== "undefined") new MutationObserver(list => list.forEach(mu => mu.addedNodes.forEach(n => n.nodeType === 1 && enhanceTerms(n))))
   .observe(document.body, { childList: true, subtree: true });
 
+
+// =====================================================================
+// VISUAL LAYER: one-line insight per tab, count-up numbers, entry motion
+// =====================================================================
+var prevNum = {};
+var reduceMotion = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+const INSIGHT_PANELS = ["partners", "why", "calc", "timetable", "revenue", "cities", "business", "funding"];
+INSIGHT_PANELS.forEach(id => {
+  const p = $("p-" + id);
+  if (!p || !p.querySelector) return;
+  const d = document.createElement("div");
+  d.className = "insight"; d.id = "ins-" + id; d.setAttribute("aria-live", "polite");
+  if (id === "calc") { const r = $("calcRisk"); r.parentNode.insertBefore(d, r); }
+  else { const h = p.querySelector(".page-head"); if (h) h.after(d); }
+});
+function setInsight(id, icon, html) { const el = $("ins-" + id); if (el) el.innerHTML = `<span class="ic">${icon}</span><div>${html}</div>`; }
+function renderInsights(m) {
+  const n = m.n, R = m.ramp, x = computeNetwork();
+  setInsight("calc", "💡", `You need <b>${short(m.investment)}</b>: ${short(m.setup * n)} to open plus ${short(Math.max(0, R.rampLoss) * n)} to get through the first months.
+    ${R.beMonth ? `Profitable from <b>month ${R.beMonth}</b>` : "Not profitable within 24 months"}${R.payMonth ? `, paid back by <b>month ${R.payMonth}</b>.` : "."}`);
+  setInsight("partners", "🤝", `<b>${PN.venues} partner venues</b> reach <b>${fmtInt(x.kidsReached)} kids</b> for ${short(x.investment)}, earning <b>${short(x.profit)}/month</b>${x.payback ? `, paid back in ${Math.ceil(x.payback)} months` : ""}.`);
+  setInsight("timetable", "🗓️", `The court is busy <b>${pct(m.tt.util)}</b> of the week with <b>${Object.keys(m.tt.by).length} different uses</b>, earning <b>${short(m.tt.weekRev)} a week</b>.`);
+  const total = STREAMS.reduce((s, g) => s + g.items.length, 0), inCalc = STREAMS.reduce((s, g) => s + g.items.filter(i => i[2]).length, 0);
+  setInsight("revenue", "💶", `Kids coaching is <b>${m.revenue ? pct(m.streams[0][1] / m.revenue) : "–"}</b> of hub revenue; <b>${total - inCalc} more streams</b> are upside not yet in the numbers.`);
+  const top = rankCities()[0];
+  setInsight("cities", "📍", `Top tier 2/3 pick: <b>${top.name}, ${countryName(top.cc)}</b> (${top.score.toFixed(0)}/100). Tier 1 capitals are parked as too expensive for now.`);
+  const list = rankCountries(), launch = list.slice().sort((a, b) => (b.ease + b.demand) - (a.ease + a.demand))[0];
+  setInsight("business", "🏛️", `Easiest to start: <b>${list[0].name}</b>. Best balance of easy setup and strong demand: <b>${launch.bestCity.split(" / ")[0]}, ${launch.name}</b>.`);
+  setInsight("funding", "💰", `Realistic grants in year 1: <b>€30–90k</b> through a non-profit club partner. Next Erasmus+ Sport deadline: <b>~March 2027</b>.`);
+}
+function renderWhyInsight(ms) {
+  const bb = ms.find(m => m.s.k === "basketball"), o = ms.filter(m => m.s.k !== "basketball").sort((a, b) => b.perCoach - a.perCoach)[0];
+  if (!bb || !o) return;
+  setInsight("why", "🏀", `Basketball runs <b>${bb.perCoach} kids per coach</b> vs ${o.perCoach} for ${o.s.name.toLowerCase()} (the next best), so coaching one kid for an hour costs <b>€${bb.coachPerKidHr.toFixed(2)}</b> vs €${o.coachPerKidHr.toFixed(2)}.`);
+}
+// Numbers glide to their new value instead of jumping.
+function countUp(scope, fromZero) {
+  if (reduceMotion || !scope || !scope.querySelectorAll || typeof requestAnimationFrame !== "function") return;
+  scope.querySelectorAll(".kpi .v, .sb-item .v").forEach(el => {
+    const label = ((el.parentElement.querySelector(".l") || {}).textContent || "") + "|" + ((el.closest(".panel") || {}).id || "");
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let node = null, t;
+    while ((t = w.nextNode())) if (/\d/.test(t.nodeValue)) { node = t; break; }
+    if (!node || /m²|ft²|[A-Za-z]{3} \d{4}/.test(node.nodeValue)) return;
+    const mm = node.nodeValue.match(/^(\D*?)(\d[\d,]*(?:\.\d+)?)([\s\S]*)$/);
+    if (!mm) return;
+    const neg = /-/.test(mm[1]), to = parseFloat(mm[2].replace(/,/g, "")) * (neg ? -1 : 1);
+    const dec = (mm[2].split(".")[1] || "").length, commas = mm[2].includes(",");
+    const from = fromZero ? 0 : prevNum[label];
+    prevNum[label] = to;
+    if (from === undefined || from === to || (from < 0) !== (to < 0) && from !== 0) return;
+    const fmt = v => { const a = Math.abs(v); return commas || (a >= 1000 && !dec) ? a.toLocaleString("en-IE", { minimumFractionDigits: dec, maximumFractionDigits: dec }) : a.toFixed(dec); };
+    const start = performance.now(), dur = fromZero ? 650 : 380;
+    const step = now => {
+      if (!node.isConnected) return;
+      const p = Math.min(1, (now - start) / dur), e = 1 - Math.pow(1 - p, 3);
+      node.nodeValue = mm[1] + fmt(from + (to - from) * e) + mm[3];
+      if (p < 1) requestAnimationFrame(step); else node.nodeValue = mm[1] + mm[2] + mm[3];
+    };
+    requestAnimationFrame(step);
+  });
+}
+function enterPanel(p) {
+  if (!p || reduceMotion) return;
+  p.classList.remove("enter"); void p.offsetWidth; p.classList.add("enter");
+  clearTimeout(p._enterT); p._enterT = setTimeout(() => p.classList.remove("enter"), 1000);
+  countUp(p, true);
+}
+
 // =====================================================================
 // Whole-plan state: read it (for cloud save) and apply it (cloud load).
 // Loaded data is untrusted, so every value is coerced to a number or a
@@ -1495,6 +1566,8 @@ function renderAll() {
   renderRevenue(m);
   renderMission(m);
   renderDeck();
+  renderInsights(m);
+  countUp(document.querySelector(".panel.active"), false);
 }
 applyAllEdits();
 buildAssumptions();
