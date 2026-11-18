@@ -651,6 +651,11 @@ const DUPLICATES = [
 // (case, numbers and ft²/m² don't matter).  [plain explanation, how it's worked out]
 // ---------------------------------------------------------------------
 const GLOSSARY = {
+  "Hall size": ["Length × width of the space the sports are fitted into. Shape matters as much as area: a padel court is 20 m long, so it needs a hall at least ~21 m in one direction."],
+  "Check a real warehouse": ["Enter a listing's size, clear height and rent. The site checks the court fits, the rooms fit and the ceiling is high enough, then works out the cash needed at that rent."],
+  "What moves the cash needed most": ["Each number is set 20% lower and 20% higher, one at a time, and the cash needed is recalculated. The longest bars are the numbers worth getting real quotes for first."],
+  "Quotes to get first": ["The estimates that move the cash needed most, with what to ask for to replace each with a real number."],
+  "Every assumption": ["Every number the plan rests on. Sourced = published rule or price; Part sourced = some items sourced; Estimate = needs a real number; Yours = you changed it."],
   // ---- Why basketball ----
   "Official court size": ["The playing area set by the sport's rules: just the lines, not the space around them."],
   "Official court": ["Area of the playing lines only, per the sport's rules.", "length × width"],
@@ -750,3 +755,68 @@ const GLOSSARY = {
   "Working in English": ["How easy it is to run the business in English."],
   "Where to launch first": ["Each country plotted by how easy it is to start (→) and demand in its best tier 2/3 city (↑). Top right = launch first."],
 };
+
+
+// ---------------------------------------------------------------------
+// CONFIDENCE. How sure we are of every input in the Hub calculator.
+// [level, what it's based on, how to firm it up]
+//   "src"  = sourced (published rule or price)
+//   "part" = partly sourced (some line items sourced, some estimated)
+//   "est"  = planner estimate, so get a real number
+// Any value the user changes is shown as "Yours" automatically.
+// ---------------------------------------------------------------------
+const CONF = {
+  occ:           ["est", "Planner estimate of how full the academy gets.", "Run an 8–12 week pilot and count paying kids."],
+  kidsFee:       ["est", "Typical European academy fees are €50–90 a month.", "Check what 3 local clubs charge per month."],
+  group:         ["part", "Coaching practice: 20–40 kids per court with one coach.", "Ask 2–3 local coaches how many kids they run per session."],
+  cac:           ["est", "Marketing cost to win one member.", "Track the cost per sign-up during the pilot."],
+  campWeeks:     ["est", "School-holiday weeks you choose to run camps.", "Check the local school holiday calendar."],
+  gymArea:       ["est", "Fitness zone is planned for a later phase.", "Decide once the academy is full."],
+  gymMembers:    ["est", "Fitness members once the zone exists.", "Survey parents during the pilot."],
+  gymFee:        ["est", "Typical functional-fitness fees €50–90 a month.", "Check 3 local gyms."],
+  adults:        ["est", "Adult basketball members.", "Count sign-ups at the first adult sessions."],
+  pickup:        ["est", "Drop-in pickup visits per month.", "Run 4 trial pickup nights and count visits."],
+  grantPct:      ["est", "Share of the fit-out paid by grants.", "See EU funding; grants go to a non-profit club."],
+  courtArea:     ["src", "FIBA court 28 × 15 m + 2 m run-off (compact 26 × 14 m for the lean build).", "Fixed by the court you choose."],
+  officeArea:    ["est", "Typical small-academy office.", "Fit to your warehouse's layout."],
+  changingArea:  ["est", "Small changing room + 2 WCs/showers.", "Check local building rules for toilets per visitor."],
+  lockerArea:    ["est", "Space for about 30 lockers.", "Fit to your warehouse's layout."],
+  storeArea:     ["part", "Sized from the store-room checklist.", "Edit the checklist items in the Hub calculator."],
+  receptionArea: ["est", "Small entrance and reception desk.", "Fit to your warehouse's layout."],
+  rentPerM2:     ["est", "Light-industrial rent varies a lot by city.", "Get 3 warehouse listings and enter them in 'Check a real warehouse'."],
+  utilPerM2:     ["est", "Heating, lighting and water.", "Ask landlords for last year's bills."],
+  depositMonths: ["est", "Typical 2–3 months of rent.", "Ask the landlord."],
+  perKid:        ["est", "Two sessions a week is typical.", "Decide your programme."],
+  churnPct:      ["est", "Youth sport typically loses 3–6% of members a month.", "Track leavers during the pilot."],
+  startPct:      ["est", "Month-1 demand as a share of the target.", "Pre-sell places before opening."],
+  rampMonths:    ["est", "Months to fill the academy.", "Compare with how fast the pilot fills."],
+  courtFitout:   ["part", "From the lean shopping list: tile price sourced, hoops and lights estimated.", "Get quotes for hoops and LED lighting."],
+  gymEquipPerM2: ["est", "Fitness equipment per m² of zone.", "Get a quote from a gym-equipment supplier."],
+  gymFloorPerM2: ["part", "Rubber gym flooring, typically €35–60/m².", "Get a flooring quote."],
+  supportFitout: ["est", "Prefab changing room, lockers, office furniture, shelving.", "Get a quote for a prefab changing room + WC."],
+  convKit:       ["part", "Starter nets and mats; some prices sourced.", "Order list in the conversion-kit table."],
+  launch:        ["est", "Launch marketing.", "Plan the launch campaign."],
+  legal:         ["est", "Company setup, insurance, legal.", "Ask an accountant for a fixed quote."],
+  headCoach:     ["est", "Check local coach wages (labour costs per country are in Start a business).", "Get salary benchmarks from local clubs."],
+  asstCoaches:   ["est", "Assistant coaches needed for the timetable.", "Plan your session rota."],
+  asstSalary:    ["est", "Assistant coach pay.", "Get local benchmarks."],
+  gymCoach:      ["est", "Fitness coach pay (once the zone exists).", "Get local benchmarks."],
+  admin:         ["est", "Admin / front desk (the founder in the lean start).", "Decide who covers the desk."],
+  cleaning:      ["est", "Cleaning and maintenance staff.", "Get a cleaning-contractor quote."],
+  insurance:     ["est", "Public liability and contents insurance.", "Get an insurance quote."],
+  software:      ["est", "Booking and payments software.", "Compare 2–3 booking platforms."],
+  maintenance:   ["est", "Repairs and upkeep.", "Keep 1–2% of the fit-out a year."],
+  brand:         ["est", "Ongoing brand marketing.", "Set a monthly marketing budget."],
+  adultFee:      ["est", "Adult monthly fee.", "Check 3 local clubs."],
+  pickupFee:     ["est", "Pickup fee per visit.", "Check local drop-in prices."],
+  campKids:      ["est", "Kids per camp week.", "Pre-sell the first camp."],
+  campFee:       ["est", "Camp fee per kid per week (€150–250 typical).", "Check 3 local holiday camps."],
+  campCostPct:   ["est", "Camp running cost as a share of camp revenue.", "Budget the first camp."],
+  privateHrs:    ["est", "Private 1:1 sessions per month.", "Count requests during the pilot."],
+  privateFee:    ["est", "Price per private session (€35–60 typical).", "Check local coaches' rates."],
+  parties:       ["est", "Birthday parties per month.", "Offer parties during the pilot."],
+  partyFee:      ["est", "Price per party (€180–300 typical).", "Check local party venues."],
+  sponsor:       ["est", "Local sponsorship per month.", "Talk to 5 local businesses."],
+  fill:          ["est", "How full off-peak sessions are and how often hire slots get booked. The biggest unknown until a pilot.", "Pre-sell off-peak slots to yoga and dance groups and local clubs."],
+};
+const CONF_LABEL = { src: "Sourced", part: "Part sourced", est: "Estimate", yours: "Yours" };

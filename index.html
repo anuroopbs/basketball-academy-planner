@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=18">
+<link rel="stylesheet" href="assets/styles.css?v=19">
 </head>
 <body>
 
@@ -24,6 +24,7 @@
       <button class="tab" role="tab" data-tab="calc"><span class="ti" aria-hidden="true">🧮</span>Hub calculator</button>
       <button class="tab" role="tab" data-tab="timetable"><span class="ti" aria-hidden="true">🗓️</span>Timetable</button>
       <button class="tab" role="tab" data-tab="revenue"><span class="ti" aria-hidden="true">💶</span>Revenue</button>
+      <button class="tab" role="tab" data-tab="assumptions"><span class="ti" aria-hidden="true">🔎</span>Assumptions</button>
       <span class="tab-sep"></span>
       <button class="tab" role="tab" data-tab="cities"><span class="ti" aria-hidden="true">📍</span>Cities</button>
       <button class="tab" role="tab" data-tab="business"><span class="ti" aria-hidden="true">🏛️</span>Start a business</button>
@@ -123,14 +124,19 @@
 <!-- ================= WHY BASKETBALL ================= -->
 <section class="panel" id="p-why">
   <div class="page-head"><div><div class="eyebrow">Strategy · sport choice</div><h1>Why basketball?</h1>
-    <p>Five sports, same floor space, drawn to scale. Basketball runs <b>20–40 kids with one coach</b>, and coaches are the cost
+    <p>Five sports in the same hall, drawn to scale. Set the hall's length and width (shape matters as much as size). Basketball runs <b>20–40 kids with one coach</b>, and coaches are the cost
       that never stops.</p></div>
-    <div class="card pad-s" style="min-width:300px;flex:0 1 420px"><div class="cols-2" style="gap:16px">
-      <div class="lever"><div class="lever-top"><span class="lever-label">Floor space</span><span class="lever-value" id="whyAreaV"></span></div>
-        <input type="range" id="whyArea" min="608" max="2500" step="10" aria-label="Floor space"></div>
-      <div class="lever"><div class="lever-top"><span class="lever-label">Coach €/hour</span><span class="lever-value" id="whyCoachV"></span></div>
-        <input type="range" id="whyCoach" min="15" max="80" step="1" aria-label="Coach cost per hour"></div>
+    <div class="card pad-s" style="min-width:300px;flex:0 1 480px">
+    <div class="lever-label">Hall size · <b id="hallAreaV" style="color:var(--accent-2)"></b></div>
+    <div class="cols-2" style="gap:16px">
+      <div class="lever"><div class="lever-top"><span class="lever-label">Length</span><span class="lever-value" id="hallLV"></span></div>
+        <input type="range" id="hallL" min="15" max="60" step="0.5" aria-label="Hall length"></div>
+      <div class="lever"><div class="lever-top"><span class="lever-label">Width</span><span class="lever-value" id="hallWV"></span></div>
+        <input type="range" id="hallW" min="10" max="40" step="0.5" aria-label="Hall width"></div>
     </div>
+    <div class="chips" id="hallPresets" style="margin:6px 0 8px"></div>
+    <div class="lever"><div class="lever-top"><span class="lever-label">Coach €/hour</span><span class="lever-value" id="whyCoachV"></span></div>
+      <input type="range" id="whyCoach" min="15" max="80" step="1" aria-label="Coach cost per hour"></div>
     <div class="lever-label" style="margin-top:8px">Build standard</div>
     <div class="seg" style="margin:4px 0 0"><button data-std="lean">🪶 Lean build</button><button data-std="premium">💎 Premium build</button></div></div>
   </div>
@@ -181,6 +187,18 @@
       <div id="calcRisk"></div>
       <div id="calcKpis"></div>
       <div class="card chart" style="margin-top:14px"><div class="sec" style="margin-top:0"><h2>First 24 months: cash flow</h2><span class="sub" id="cashSub"></span></div><div id="cashChart"></div></div>
+      <div class="card" style="margin-top:14px"><div class="sec" style="margin-top:0"><h2>Check a real warehouse</h2><span class="sub">compare up to 3 listings</span></div>
+        <div class="wh-form">
+          <label>Name<input id="whName" class="text-in" placeholder="e.g. Unit 4, Industrial Park" maxlength="40"></label>
+          <label>Length (<span id="whU1">ft</span>)<input id="whL" class="text-in" type="number" min="0" step="any" inputmode="decimal"></label>
+          <label>Width (<span id="whU2">ft</span>)<input id="whW" class="text-in" type="number" min="0" step="any" inputmode="decimal"></label>
+          <label>Clear height (<span id="whU3">ft</span>)<input id="whH" class="text-in" type="number" min="0" step="any" inputmode="decimal"></label>
+          <label>Rent per month (€)<input id="whRent" class="text-in" type="number" min="0" step="any" inputmode="decimal"></label>
+          <button class="btn primary" id="whAdd">Check it</button>
+        </div>
+        <div class="help" id="whMsg" style="color:#fca5a5"></div>
+        <div id="whTable"></div>
+      </div>
       <div class="split-r" style="margin-top:14px">
         <div class="card chart"><div class="sec" style="margin-top:0"><h2>Warehouse layout (to scale)</h2><span class="sub" id="floorSub"></span></div>
           <div id="floorPlan"></div><div class="legend" id="roomLegend"></div></div>
@@ -264,6 +282,20 @@
   <div class="chips" id="streamFilter" style="margin:16px 0 10px"></div>
   <div class="streams" id="streams"></div>
   <div id="streamSrc"></div>
+</section>
+
+<!-- ================= ASSUMPTIONS ================= -->
+<section class="panel" id="p-assumptions">
+  <div class="page-head"><div><div class="eyebrow">Numbers · confidence</div><h1>Assumptions &amp; confidence</h1>
+    <p>Every number the plan rests on, how sure we are of it, and which ones move the cash needed most. Change any value here or in the
+      Hub calculator; numbers you change are marked <b>Yours</b>.</p></div></div>
+  <div class="kpis" id="confKpis"></div>
+  <div class="cols-2" style="margin-top:14px">
+    <div class="card chart"><div class="sec" style="margin-top:0"><h2>What moves the cash needed most</h2><span class="sub">each number 20% lower / higher</span></div><div id="tornado"></div></div>
+    <div class="card"><div class="sec" style="margin-top:0"><h2>Quotes to get first</h2><span class="sub">biggest estimates</span></div><div id="quotesList"></div></div>
+  </div>
+  <div class="sec"><h2>Every assumption</h2><span class="sub">Sourced · Part sourced · Estimate · Yours</span></div>
+  <div class="table-scroll"><table id="assumeTable"></table></div>
 </section>
 
 <!-- ================= CITIES ================= -->
@@ -360,9 +392,9 @@
   </aside>
 </div>
 
-<script src="assets/data.js?v=18"></script>
-<script src="assets/app.js?v=18"></script>
+<script src="assets/data.js?v=19"></script>
+<script src="assets/app.js?v=19"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js"></script>
-<script src="assets/cloud.js?v=18"></script>
+<script src="assets/cloud.js?v=19"></script>
 </body>
 </html>

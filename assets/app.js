@@ -140,14 +140,14 @@ const saved = (() => { try { return JSON.parse(localStorage.getItem(STORE_KEY) |
 // Cloud sync (cloud.js) sets this to be told about every change.
 let onStateChange = null;
 function save() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify({ A, W, BW, WHY, TT, TTF, PN, slide, preset, build, EDITS })); } catch {}
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({ A, W, BW, WHY, TT, TTF, PN, slide, preset, build, EDITS, WH })); } catch {}
   if (onStateChange) onStateChange();
 }
 
 // ---------------------------------------------------------------------
 // Tabs
 // ---------------------------------------------------------------------
-const TABS = ["mission", "partners", "why", "calc", "timetable", "revenue", "cities", "business", "funding", "deck", "params"];
+const TABS = ["mission", "partners", "why", "calc", "timetable", "revenue", "assumptions", "cities", "business", "funding", "deck", "params"];
 const TAB_ALIASES = { about: "mission" };
 let currentTab = "mission";
 function showTab(name) {
@@ -162,6 +162,7 @@ function showTab(name) {
   window.scrollTo(0, 0);
   paintAll();
   if (typeof enterPanel === "function") enterPanel($("p-" + name));
+  if (name === "assumptions" && typeof renderAssumptions === "function") renderAssumptions();
 }
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => showTab(t.dataset.tab)));
 document.addEventListener("click", e => {
@@ -344,7 +345,7 @@ function rampUp(m, months = 24) {
   const series = [];
   for (let t = 1; t <= months; t++) {
     const r = s + (1 - s) * Math.min(1, (t - 1) / Math.max(1, rm - 1));
-    const mt = compute({ occ: P.occ * r, fill: P.fill * r, gymMembers: P.gymMembers * r, adults: P.adults * r, pickup: P.pickup * r,
+    const mt = compute({ ...P, occ: P.occ * r, fill: P.fill * r, gymMembers: P.gymMembers * r, adults: P.adults * r, pickup: P.pickup * r,
       privateHrs: P.privateHrs * r, parties: P.parties * r, campKids: P.campKids * r });
     const acq = Math.max(0, mt.members - prevMembers) * P.cac;
     prevMembers = mt.members;
@@ -372,17 +373,17 @@ const beoText = beo => beo === Infinity || beo > 1 ? `<span class="neg">${beo ==
 
 function leverHtml(l, val, id) {
   return `<div class="lever${l.main ? " main" : ""}">
-    <div class="lever-top"><span class="lever-label">${l.label}</span><span class="lever-value" id="${id}v_${l.k}"></span></div>
+    <div class="lever-top"><span class="lever-label">${l.label}${l.conf ? ` <span class="conf" data-conf="${l.k}"></span>` : ""}</span><span class="lever-value" id="${id}v_${l.k}"></span></div>
     <input type="range" id="${id}${l.k}" min="${l.min}" max="${l.max}" step="${l.step}" value="${val}" aria-label="${l.label}">
     ${l.help ? `<div class="help">${l.help}</div>` : ""}</div>`;
 }
-$("leversCourt").innerHTML = LEVERS_COURT.map(l => leverHtml(l, A[l.k], "l_")).join("");
-$("leversOther").innerHTML = LEVERS_OTHER.map(l => leverHtml(l, A[l.k], "l_")).join("");
+$("leversCourt").innerHTML = LEVERS_COURT.map(l => leverHtml({ ...l, conf: l.k !== "n" }, A[l.k], "l_")).join("");
+$("leversOther").innerHTML = LEVERS_OTHER.map(l => leverHtml({ ...l, conf: true }, A[l.k], "l_")).join("");
 LEVERS.forEach(l => $("l_" + l.k).addEventListener("input", e => { A[l.k] = Number(e.target.value); preset = ""; if (l.k in BUILDS.lean) build = ""; save(); renderAll(); }));
 
 function buildAssumptions() {
   $("groups").innerHTML = GROUPS.map(g => `<div class="group"><h3>${g.title}</h3>
-    ${g.fields.map(([k, label]) => `<div class="field"><label for="f_${k}">${label}</label>
+    ${g.fields.map(([k, label]) => `<div class="field"><label for="f_${k}">${label} <span class="conf" data-conf="${k}"></span></label>
       <input id="f_${k}" data-k="${k}" type="number" min="0" step="any" inputmode="decimal" value="${dispField(k, A[k])}"></div>`).join("")}</div>`).join("");
   $("groups").querySelectorAll("input").forEach(inp => inp.addEventListener("input", () => {
     A[inp.dataset.k] = rawField(inp.dataset.k, Math.max(0, Number(inp.value) || 0)); preset = ""; if (inp.dataset.k in BUILDS.lean) build = ""; save(); renderAll();
@@ -678,10 +679,13 @@ function renderTimetable(m) {
 // =====================================================================
 // WHY BASKETBALL
 // =====================================================================
-let WHY = { area: 608, coach: 35, std: "lean", ...(saved.WHY || {}) };
+let WHY = { L: 32, W: 19, coach: 35, std: "lean", ...(saved.WHY || {}) };
 if (WHY.std !== "premium") WHY.std = "lean";
-$("whyArea").value = WHY.area; $("whyCoach").value = WHY.coach;
-$("whyArea").addEventListener("input", e => { WHY.area = Number(e.target.value); save(); renderWhy(); renderDeck(); });
+if (!(WHY.L > 0 && WHY.W > 0)) { WHY.L = 32; WHY.W = 19; }
+// The hall the sports are fitted into: length × width (long side first).
+const hallDims = () => [Math.max(WHY.L, WHY.W), Math.min(WHY.L, WHY.W)];
+const hallArea = () => WHY.L * WHY.W;
+$("whyCoach").value = WHY.coach;
 $("whyCoach").addEventListener("input", e => { WHY.coach = Number(e.target.value); save(); renderWhy(); renderDeck(); });
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-std]");
@@ -700,8 +704,8 @@ const perUnit = () => UNIT === "ft" ? "ft²" : "m²";
 function spaceDims(area) { const w = Math.sqrt(area * 32 / 19); return [w, area / w]; }
 // How many courts physically fit, using each sport's layout rules. Tries
 // courts side by side along the long wall and along the short wall.
-function fitCourts(s, area) {
-  const [W, H] = spaceDims(area), [cl, cw] = s.court;
+function fitCourts(s, area, dims = hallDims()) {
+  const [W, H] = dims, [cl, cw] = s.court;
   const across = len => Math.max(0, Math.floor((len - 2 * s.side + s.gap) / (cw + s.gap)));
   const rowDepth = cl + s.endF + s.endB + s.corridor, pairDepth = 2 * (cl + s.endF + s.endB) + s.corridor;
   const rowsIn = len => {
@@ -764,7 +768,7 @@ function sportMetrics(s, area, coachRate) {
     perCoach, coachPerKidHr: coachRate / perCoach, invPerPlace: cost.total / s.group,
     m2PerKid: space / s.group, invPerM2: cost.total / space, usedPct: n ? L.blockArea / area : 0 };
 }
-const allSportMetrics = () => SPORTS.map(s => sportMetrics(s, WHY.area, WHY.coach));
+const allSportMetrics = () => SPORTS.map(s => sportMetrics(s, hallArea(), WHY.coach));
 
 function sportSvg(m) {
   const { fit, s, L } = m, pad = 0.6, k = 10;
@@ -792,20 +796,21 @@ function sportSvg(m) {
 
 function renderSportEdit() {
   $("sportEdit").innerHTML = `<div class="table-scroll"><table><thead><tr><th>Sport</th><th>Kids per court</th><th>Courts per coach</th><th>Wall → first court (m)</th><th>Between courts (m)</th><th>Front clearance (m)</th><th>Back clearance (m)</th><th>Corridor (m)</th><th>Fit-out per court</th><th>Courts that fit</th></tr></thead><tbody>` +
-    SPORTS.map(sp => { const mm = sportMetrics(sp, WHY.area, WHY.coach); return `<tr><td>${sp.icon} ${sp.name}</td>${["group", "cpc", "side", "gap", "endF", "endB", "corridor"].map(f =>
+    SPORTS.map(sp => { const mm = sportMetrics(sp, hallArea(), WHY.coach); return `<tr><td>${sp.icon} ${sp.name}</td>${["group", "cpc", "side", "gap", "endF", "endB", "corridor"].map(f =>
       `<td>${cellIn(`sport.${sp.k}.${f}`, sp[f], `${sp.name}: ${f}`)}</td>`).join("")}<td>${costBtn(mm, eur(mm.courtCost))}</td><td><b>${mm.fit.count}</b></td></tr>`; }).join("") +
     `</tbody></table></div><p class="help">Distances in metres. Kids per court × courts per coach = kids per coach. Click a fit-out amount for its breakdown and sources.</p>` + resetBtn("sport.");
 }
 const costBtn = (m, value) => `<button class="cost-link" data-cost="${m.s.k}" title="See the breakdown and sources">${value}</button>`;
 function renderWhy() {
-  $("whyAreaV").textContent = fmtArea(WHY.area);
+  renderHallControls();
   $("whyCoachV").textContent = "€" + WHY.coach;
   document.querySelectorAll("[data-std]").forEach(b => b.classList.toggle("on", b.dataset.std === WHY.std));
   const ms = allSportMetrics(), U = perUnit();
   $("sportPanels").innerHTML = ms.map(m => `<div class="sport${m.s.k === "basketball" ? " win" : ""}">
-    <div class="hd"><span>${m.s.icon} ${m.s.name}</span><span class="tag${m.s.k === "basketball" ? " acc" : ""}">${plural(m.fit.count, "court", "courts")}</span></div>
+    <div class="hd"><span>${m.s.icon} ${m.s.name}</span><span class="tag${m.s.k === "basketball" ? " acc" : ""}">${plural(m.fit.count, "court", "courts")} · ${fmtArea(m.space)}${m.fit.count > 1 ? " each" : ""}</span></div>
     ${sportSvg(m)}
     <div class="trio"><div><b>${m.students}</b><span>kids</span></div><div><b>${m.coaches}</b><span>${m.coaches === 1 ? "coach" : "coaches"}</span></div><div><b>${costBtn(m, short(m.investment))}</b><span>fit-out</span></div></div>
+    <div class="next-court">${nextCourtHint(m.s, m.fit.count)}</div>
     <p class="help sport-note">${m.s.note}</p>
   </div>`).join("");
   const chart = (title, key, fmt, lowerBetter) => {
@@ -817,8 +822,8 @@ function renderWhy() {
   $("sportCharts").innerHTML = [
     chart("Kids per coach", "perCoach", v => v, false),
     chart(`Coach cost per kid-hour (€${WHY.coach}/h)`, "coachPerKidHr", v => "€" + v.toFixed(2), true),
-    chart(`Kids at once in ${fmtArea(WHY.area)}`, "students", v => fmtInt(v), false),
-    chart(`Coaches needed in ${fmtArea(WHY.area)}`, "coaches", v => v, true),
+    chart(`Kids at once in ${fmtArea(hallArea())}`, "students", v => fmtInt(v), false),
+    chart(`Coaches needed in ${fmtArea(hallArea())}`, "coaches", v => v, true),
     chart("Floor space per kid", "m2PerKid", v => fmtArea(v), true),
     chart("Fit-out per kid place", "invPerPlace", v => eur(v), true),
   ].join("");
@@ -835,8 +840,8 @@ function renderWhy() {
     row("= Space per court", m => `<b>${fmtArea(m.space)}</b>`) +
     row("Left-over hall space (per court)", m => m.fit.count ? fmtArea(m.leftover) : "–") +
     row("= Hall area per court", m => m.fit.count ? fmtArea(m.hallPerCourt) : "–") +
-    sec(`In your ${fmtArea(WHY.area)}`) +
-    row(`Courts in ${fmtArea(WHY.area)}`, m => m.fit.count) +
+    sec(`In your ${fmtArea(hallArea())}`) +
+    row(`Courts in ${fmtArea(hallArea())}`, m => m.fit.count) +
     row("Kids per coach", m => `${m.perCoach} <span class="muted small">(${m.s.group}/court${m.s.cpc > 1 ? ` × ${m.s.cpc} courts` : ""})</span>`) +
     row("Kids at once", m => fmtInt(m.students)) +
     row("Coaches needed", m => m.coaches) +
@@ -866,7 +871,7 @@ function closeCostModal() { costOpen = null; $("costModal").hidden = true; docum
 function renderCostModal() {
   if (!costOpen) return;
   const s = SPORTS.find(x => x.k === costOpen); if (!s) return;
-  const m = sportMetrics(s, WHY.area, WHY.coach), C = SPORT_COSTS[s.k], U = perUnit();
+  const m = sportMetrics(s, hallArea(), WHY.coach), C = SPORT_COSTS[s.k], U = perUnit();
   const basisText = r => r.basis === "fixed" ? "fixed price" :
     `${fmtArea(r.qty)} × €${(+perArea(r.value).toFixed(2))}/${U} (${r.basis === "court" ? "court area" : "space per court"})`;
   const srcCell = r => r.src === "est" ? `<span class="tag">estimate</span>` :
@@ -880,7 +885,7 @@ function renderCostModal() {
     <div class="table-scroll"><table><thead><tr><th>Item</th><th class="l">How it's worked out</th><th>Price (€${"" /* keeps header simple */})</th><th>Amount</th><th>Source</th></tr></thead><tbody>
       ${m.cost.rows.map(r => `<tr><td>${r.item}</td><td class="l muted small">${basisText(r)}</td><td>${valueIn(r)}</td><td>${eur(r.amount)}</td><td>${srcCell(r)}</td></tr>`).join("")}
       <tr class="total"><td>One court</td><td></td><td></td><td>${eur(m.cost.total)}</td><td></td></tr>
-      <tr><td>× courts that fit in ${fmtArea(WHY.area)}</td><td></td><td></td><td>${m.fit.count}</td><td></td></tr>
+      <tr><td>× courts that fit in ${fmtArea(hallArea())}</td><td></td><td></td><td>${m.fit.count}</td><td></td></tr>
       <tr class="total"><td>Total fit-out</td><td></td><td></td><td>${eur(m.investment)}</td><td></td></tr>
     </tbody></table></div>
     ${C.note ? `<div class="callout" style="margin-top:12px"><div>ℹ️</div><div>${C.note}</div></div>` : ""}
@@ -1214,8 +1219,8 @@ function buildSlides(m) {
      <div style="max-width:420px;width:100%">${flywheelSvg()}</div>`,
     `<div class="eyebrow">Why basketball</div><h2>The most kids per coach</h2><div class="big">${bb.s.range}</div>
      <p>kids per coach on one court, vs ${others.map(o => `${o.s.name.toLowerCase()} ${o.s.range}`).join(", ")}.</p>
-     ${K([{ hero: true, label: `Basketball · ${fmtInt(WHY.area)} m²`, value: `${bb.students} kids`, sub: "1 coach" },
-       ...others.slice(0, 3).map(o => ({ label: `${o.s.name} · ${fmtInt(WHY.area)} m²`, value: `${o.students} kids`, sub: plural(o.coaches, "coach", "coaches") }))])}`,
+     ${K([{ hero: true, label: `Basketball · ${fmtInt(hallArea())} m²`, value: `${bb.students} kids`, sub: "1 coach" },
+       ...others.slice(0, 3).map(o => ({ label: `${o.s.name} · ${fmtInt(hallArea())} m²`, value: `${o.students} kids`, sub: plural(o.coaches, "coach", "coaches") }))])}`,
     `<div class="eyebrow">One court, used all day</div><h2>${pct(m.tt.util)} utilisation, ${Object.keys(m.tt.by).length} different uses</h2>
      <ul><li>06–10: early training, mini kids, women's yoga, seniors</li><li>10–16: school PE, badminton, pickleball, handball, corporate</li>
        <li>16–19: the kids academy (prime time)</li><li>19–22: dance rental, leagues, pickup basketball</li></ul>
@@ -1448,7 +1453,7 @@ if (typeof MutationObserver !== "undefined") new MutationObserver(list => list.f
 // =====================================================================
 var prevNum = {};
 var reduceMotion = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-const INSIGHT_PANELS = ["partners", "why", "calc", "timetable", "revenue", "cities", "business", "funding"];
+const INSIGHT_PANELS = ["partners", "why", "calc", "timetable", "revenue", "assumptions", "cities", "business", "funding"];
 INSIGHT_PANELS.forEach(id => {
   const p = $("p-" + id);
   if (!p || !p.querySelector) return;
@@ -1511,12 +1516,179 @@ function enterPanel(p) {
   countUp(p, true);
 }
 
+
+// =====================================================================
+// HALL SHAPE (Why basketball): length × width instead of one area,
+// with presets and real warehouses. Courts are fitted to this shape.
+// =====================================================================
+const HALL_PRESETS = [["Basketball hall", 32, 19], ["Padel-friendly", 32, 21], ["4-court sports hall", 34.5, 20], ["Large warehouse", 40, 25]];
+function setHall(L, W) {
+  WHY.L = clamp(+L || 32, 10, 80); WHY.W = clamp(+W || 19, 8, 60);
+  $("hallL").value = WHY.L; $("hallW").value = WHY.W;
+  save(); renderWhy(); renderDeck(); paintAll();
+}
+$("hallL").addEventListener("input", e => setHall(e.target.value, WHY.W));
+$("hallW").addEventListener("input", e => setHall(WHY.L, e.target.value));
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-hall]");
+  if (b) { const [L, W] = b.dataset.hall.split("x").map(Number); setHall(L, W); }
+});
+function renderHallControls() {
+  $("hallL").value = WHY.L; $("hallW").value = WHY.W;
+  $("hallLV").textContent = fmtLen(WHY.L); $("hallWV").textContent = fmtLen(WHY.W);
+  $("hallAreaV").textContent = `${fmtDims(WHY.L, WHY.W)} = ${fmtArea(hallArea())}`;
+  const chips = [...HALL_PRESETS, ...WH.map(w => ["🏭 " + w.name, w.L, w.W])];
+  $("hallPresets").innerHTML = chips.map(([n, L, W]) =>
+    `<button class="chip${Math.abs(WHY.L - L) < .01 && Math.abs(WHY.W - W) < .01 ? " on" : ""}" data-hall="${L}x${W}">${n} <span class="n">${fmtDims(L, W)}</span></button>`).join("");
+}
+// What it would take to fit one more court of this sport.
+function nextCourtHint(s, count) {
+  const [L, W] = hallDims();
+  const find = grow => { for (let d = 0.25; d <= 40; d += 0.25) if (fitCourts(s, 0, grow(d)).count > count) return d; return null; };
+  const dL = find(d => [Math.max(L + d, W), Math.min(L + d, W)]), dW = find(d => [Math.max(L, W + d), Math.min(L, W + d)]);
+  const parts = [dW !== null ? `+${fmtLen(dW)} wider` : "", dL !== null ? `+${fmtLen(dL)} longer` : ""].filter(Boolean);
+  return parts.length ? `${count ? "One more court" : "First court"}: ${parts.join(" or ")}` : "";
+}
+
+// =====================================================================
+// REAL WAREHOUSES (Hub calculator): check up to 3 listings and compare.
+// =====================================================================
+let WH = Array.isArray(saved.WH) ? saved.WH.filter(w => w && w.L > 0 && w.W > 0).slice(0, 3) : [];
+const lenIn = m => +(UNIT === "ft" ? m * FT : m).toFixed(1);
+const lenOut = v => UNIT === "ft" ? v / FT : v;
+function whCheck(w) {
+  const m = compute(), need = A.courtArea >= 600 ? [32, 19] : [30, 18];
+  const L = Math.max(w.L, w.W), Wd = Math.min(w.L, w.W), area = L * Wd;
+  const courtFits = L >= need[0] && Wd >= need[1];
+  const roomsNeed = roomsArea(A) + (A.gymArea || 0);
+  const roomsFit = courtFits && area - need[0] * need[1] >= roomsNeed;
+  const ceilOk = w.h >= 7;
+  const ceilText = w.h >= 7 ? "OK for basketball" : w.h >= 6 ? "Too low for basketball (needs 7 m); fine for padel or pickleball" : "Too low";
+  const rentPerM2 = w.rent / m.totalArea;
+  const r = computeAll({ rentPerM2 });
+  const verdict = !courtFits ? ["no", "Court doesn't fit"] : !roomsFit ? ["warn", "Court fits, rooms don't"] : !ceilOk ? ["warn", "Ceiling too low"] : ["ok", "Works"];
+  return { L, Wd, area, need, courtFits, roomsNeed, roomsFit, ceilOk, ceilText, rentPerM2, r, verdict };
+}
+function renderWarehouses() {
+  const U = UNIT === "ft" ? "ft" : "m";
+  ["whU1", "whU2", "whU3"].forEach(id => $(id).textContent = U);
+  if (!WH.length) { $("whTable").innerHTML = `<p class="help">Add a listing above to check it: does the court fit, do the rooms fit, is the ceiling high enough, and what cash it needs at that rent.</p>`; return; }
+  const yes = (ok, t) => `<div class="chk ${ok ? "ok" : "no"}"><span>${ok ? "✓" : "✗"}</span>${t}</div>`;
+  $("whTable").innerHTML = `<div class="wh-grid">` + WH.map((w, i) => {
+    const c = whCheck(w);
+    return `<div class="wh-card${w.active ? " active" : ""}">
+      <div class="wh-head"><b>🏭 ${escH(w.name)}</b><span class="verdict ${c.verdict[0]}">${c.verdict[1]}</span></div>
+      <div class="help">${fmtDims(c.L, c.Wd)} · ${fmtArea(c.area)} · ${fmtLen(w.h)} high · €${fmtInt(w.rent)}/month</div>
+      ${yes(c.courtFits, `Court fits (needs ${fmtDims(c.need[0], c.need[1])})`)}
+      ${yes(c.roomsFit, `Rooms fit (need ${fmtArea(c.roomsNeed)} beside the court)`)}
+      ${yes(c.ceilOk, c.ceilText)}
+      <div class="wh-nums"><div><span>Rent</span><b>€${(+perArea(w.rent / c.area).toFixed(2))}/${perUnit()}</b></div>
+        <div><span>Cash needed</span><b>${short(c.r.ramp.peak)}</b></div>
+        <div><span>Payback</span><b>${c.r.ramp.payMonth ? c.r.ramp.payMonth + " mo" : "–"}</b></div></div>
+      <div class="row-btns"><button class="btn${w.active ? " primary" : ""}" data-wh-use="${i}">${w.active ? "✓ In use" : "Use this one"}</button><button class="btn" data-wh-del="${i}">Remove</button></div>
+    </div>`;
+  }).join("") + `</div><p class="help">“Use this one” puts its rent and size into the calculator and the Why basketball hall. Rent is for the whole warehouse, even if it's bigger than you need.</p>`;
+}
+const escH = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+$("whAdd").addEventListener("click", () => {
+  const w = { name: ($("whName").value.trim() || `Warehouse ${WH.length + 1}`).slice(0, 40), L: lenOut(+$("whL").value), W: lenOut(+$("whW").value),
+    h: lenOut(+$("whH").value), rent: +$("whRent").value };
+  if (!(w.L > 0 && w.W > 0 && w.h > 0 && w.rent > 0)) { $("whMsg").textContent = "Fill in length, width, height and monthly rent."; return; }
+  if (WH.length >= 3) WH.shift();
+  WH.push(w); $("whMsg").textContent = "";
+  ["whName", "whL", "whW", "whH", "whRent"].forEach(id => $(id).value = "");
+  save(); renderAll(); renderHallControls();
+});
+document.addEventListener("click", e => {
+  const u = e.target.closest("[data-wh-use]"), d = e.target.closest("[data-wh-del]");
+  if (u) {
+    const w = WH[+u.dataset.whUse]; if (!w) return;
+    WH.forEach(x => x.active = x === w);
+    A.rentPerM2 = w.rent / compute().totalArea; preset = "";
+    WHY.L = Math.max(w.L, w.W); WHY.W = Math.min(w.L, w.W);
+    save(); syncInputs(); renderWhy(); renderAll();
+  }
+  if (d) { WH.splice(+d.dataset.whDel, 1); save(); renderAll(); renderHallControls(); }
+});
+
+// =====================================================================
+// CONFIDENCE + WHAT MOVES THE CASH NEEDED (Assumptions tab)
+// =====================================================================
+function refValue(k) {
+  if (build && BUILDS[build] && BUILDS[build][k] !== undefined) return BUILDS[build][k];
+  if (preset && PRESETS[preset] && PRESETS[preset][k] !== undefined) return PRESETS[preset][k];
+  return k === "fill" ? 60 : DEFAULTS[k];
+}
+const curValue = k => k === "fill" ? TTF.fill : A[k];
+const isYours = k => Math.abs(curValue(k) - refValue(k)) > 1e-6;
+const confLevel = k => isYours(k) ? "yours" : (CONF[k] || ["est"])[0];
+const confBadge = k => { const l = confLevel(k); return `<span class="conf ${l}" data-conf="${k}" title="${(CONF[k] || [, ""])[1]}">${CONF_LABEL[l]}</span>`; };
+function refreshBadges() {
+  document.querySelectorAll("[data-conf]").forEach(el => { const l = confLevel(el.dataset.conf); el.className = "conf " + l; el.textContent = CONF_LABEL[l]; });
+}
+// All inputs with a label, in calculator order.
+function assumptionList() {
+  const list = [["Levers", LEVERS.filter(l => l.k !== "n").map(l => [l.k, l.label])]];
+  GROUPS.forEach(g => list.push([g.title, g.fields.map(([k, label]) => [k, label])]));
+  list.push(["Timetable", [["fill", "Attendance & booking rate (%)"]]]);
+  return list;
+}
+// Cash needed with each input 20% lower and 20% higher.
+function sensitivity() {
+  const base = computeAll().ramp.peak, out = [];
+  for (const [, items] of assumptionList()) for (const [k, label] of items) {
+    const v = curValue(k);
+    if (!v || !CONF[k]) continue;
+    const lo = computeAll({ [k]: v * 0.8 }).ramp.peak, hi = computeAll({ [k]: v * 1.2 }).ramp.peak;
+    out.push({ k, label, lo: lo - base, hi: hi - base, swing: Math.max(Math.abs(lo - base), Math.abs(hi - base)) });
+  }
+  return { base, rows: out.sort((a, b) => b.swing - a.swing) };
+}
+function renderAssumptions() {
+  if (currentTab !== "assumptions") return;
+  const S = sensitivity(), top = S.rows.slice(0, 10), max = Math.max(1, ...top.map(r => r.swing));
+  const rank = Object.fromEntries(S.rows.map((r, i) => [r.k, i + 1]));
+  const all = assumptionList().flatMap(([, items]) => items.map(([k]) => k));
+  const count = l => all.filter(k => confLevel(k) === l).length;
+  $("confKpis").innerHTML = kpis([
+    { hero: true, label: "Cash needed now", value: short(S.base), sub: "the number everything below moves" },
+    { label: "Sourced", value: count("src"), sub: "published rule or price" },
+    { label: "Part sourced", value: count("part"), sub: "some items sourced" },
+    { label: "Estimates", value: count("est"), sub: "need a real number" },
+    { label: "Yours", value: count("yours"), sub: "you changed these" },
+  ]);
+  const bar = (d, cls) => `<span class="tbar ${cls} ${d < 0 ? "neg" : "pos"}" style="width:${Math.abs(d) / max * 50}%"></span>`;
+  $("tornado").innerHTML = top.map(r => `<div class="tor-row"><span class="tl">${r.label} ${confBadge(r.k)}</span>
+      <div class="tor-bar"><span class="mid"></span>${bar(r.lo, "lo")}${bar(r.hi, "hi")}</div>
+      <span class="tv">${r.lo >= 0 ? "+" : "−"}${short(Math.abs(r.lo))} / ${r.hi >= 0 ? "+" : "−"}${short(Math.abs(r.hi))}</span></div>`).join("") +
+    `<div class="legend"><span><i style="background:#60a5fa"></i>number 20% lower</span><span><i style="background:#ff9a3c"></i>number 20% higher</span><span>Bars left = less cash needed, right = more.</span></div>`;
+  const quotes = S.rows.filter(r => confLevel(r.k) !== "yours" && confLevel(r.k) !== "src").slice(0, 5);
+  $("quotesList").innerHTML = quotes.map((r, i) => `<div class="quote-row"><span class="qn">${i + 1}</span><div><b>${r.label}</b> ${confBadge(r.k)}
+      <p>${CONF[r.k][2]}</p><span class="help">Moves cash needed by up to ${short(r.swing)}</span></div></div>`).join("") ||
+    `<p class="help">Every big driver has a real number. 🎉</p>`;
+  $("assumeTable").innerHTML = `<thead><tr><th>Assumption</th><th>Value</th><th class="l">Confidence</th><th class="l">Based on · how to firm it up</th><th>Impact</th></tr></thead><tbody>` +
+    assumptionList().map(([title, items]) => `<tr class="sec-row"><td colspan="5">${title}</td></tr>` + items.map(([k, label]) =>
+      `<tr><td class="l">${label}</td><td><input class="cell-in" type="number" min="0" step="any" data-assume="${k}" value="${k === "fill" ? TTF.fill : dispField(k, A[k])}" aria-label="${label}"></td>
+        <td class="l">${confBadge(k)}</td><td class="l small muted">${(CONF[k] || ["", ""])[1]} <b style="color:#cfd3da">${(CONF[k] || ["", "", ""])[2]}</b></td>
+        <td>${rank[k] ? "#" + rank[k] : "–"}</td></tr>`).join("")).join("") + "</tbody>";
+  const big = S.rows.filter(r => confLevel(r.k) === "est").slice(0, 3).map(r => r.label.toLowerCase());
+  setInsight("assumptions", "🔎", `<b>${count("est")} of ${all.length}</b> numbers are still estimates. The ones that move the cash needed most: <b>${big.join(", ")}</b>. Get real numbers for those first.`);
+}
+document.addEventListener("change", e => {
+  const el = e.target.closest("[data-assume]");
+  if (!el) return;
+  const k = el.dataset.assume, v = Math.max(0, Number(el.value) || 0);
+  if (k === "fill") TTF.fill = v; else A[k] = rawField(k, v);
+  preset = ""; if (k in BUILDS.lean) build = "";
+  save(); syncInputs(); renderAll();
+});
+
 // =====================================================================
 // Whole-plan state: read it (for cloud save) and apply it (cloud load).
 // Loaded data is untrusted, so every value is coerced to a number or a
 // known activity key before it reaches the page.
 // =====================================================================
-function getState() { return { A, W, BW, WHY, TT, TTF, PN, preset, build, EDITS }; }
+function getState() { return { A, W, BW, WHY, TT, TTF, PN, preset, build, EDITS, WH }; }
 function numbersFrom(src, defaults) {
   const out = { ...defaults };
   if (src && typeof src === "object") for (const k of Object.keys(defaults)) {
@@ -1530,7 +1702,7 @@ function applyState(s) {
   A = numbersFrom(s.A, DEFAULTS);
   W = numbersFrom(s.W, Object.fromEntries(FACTORS.map(f => [f.k, f.w])));
   BW = numbersFrom(s.BW, Object.fromEntries(BIZ_FACTORS.map(f => [f.k, f.w])));
-  WHY = { ...numbersFrom(s.WHY, { area: 608, coach: 35 }), std: s.WHY && s.WHY.std === "premium" ? "premium" : "lean" };
+  WHY = { ...numbersFrom(s.WHY, { L: 32, W: 19, coach: 35 }), std: s.WHY && s.WHY.std === "premium" ? "premium" : "lean" };
   TTF = numbersFrom(s.TTF, { fill: 60 });
   PN = numbersFrom(s.PN, Object.fromEntries(PN_LEVERS.map(l => [l.k, l.v])));
   TT = Array.isArray(s.TT) && s.TT.length === 7 && s.TT.every(r => Array.isArray(r) && r.length === TT_HOURS)
@@ -1538,6 +1710,8 @@ function applyState(s) {
     : TT_DEFAULT.map(r => r.slice());
   preset = PRESETS[s.preset] ? s.preset : "";
   build = BUILDS[s.build] ? s.build : "";
+  if (Array.isArray(s.WH)) WH = s.WH.filter(w => w && +w.L > 0 && +w.W > 0).slice(0, 3)
+    .map(w => ({ name: String(w.name || "Warehouse").slice(0, 40), L: +w.L, W: +w.W, h: +w.h || 0, rent: +w.rent || 0, active: !!w.active }));
   EDITS = {};
   if (s.EDITS && typeof s.EDITS === "object")
     for (const [p, v] of Object.entries(s.EDITS).slice(0, 2000)) if (Number.isFinite(Number(v))) EDITS[p] = Number(v);
@@ -1546,7 +1720,7 @@ function applyState(s) {
   PN_LEVERS.forEach(l => $("pn_" + l.k).value = PN[l.k]);
   FACTORS.forEach(f => $("w_" + f.k).value = W[f.k]);
   BIZ_FACTORS.forEach(f => $("bw_" + f.k).value = BW[f.k]);
-  $("fill").value = TTF.fill; $("whyArea").value = WHY.area; $("whyCoach").value = WHY.coach;
+  $("fill").value = TTF.fill; $("whyCoach").value = WHY.coach;
   buildAssumptions();
   save(); renderWhy(); renderAll(); paintAll();
 }
@@ -1566,6 +1740,9 @@ function renderAll() {
   renderRevenue(m);
   renderMission(m);
   renderDeck();
+  renderWarehouses();
+  refreshBadges();
+  renderAssumptions();
   renderInsights(m);
   countUp(document.querySelector(".panel.active"), false);
 }
